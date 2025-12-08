@@ -1,0 +1,107 @@
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "listen": "192.168.5.1",
+      "port": 4434,
+      "protocol": "vless",
+      "tag": "reality-in",
+      "settings": {
+        "clients": [
+          {
+            "id": "45497687-90c3-4b30-869b-271165ffc598",
+            "email": "user1",
+            "flow": "xtls-rprx-vision"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "test.com:443",
+          "xver": 0,
+          "serverNames": [
+            "test.com"
+          ],
+          "privateKey": "aFmTDsEaO7XRxNLRPlBPtOq-_uEN1fx26zDPyKP2QlE",
+          "minClientVer": "",
+          "maxClientVer": "",
+          "maxTimeDiff": 0,
+          "shortIds": [
+            ""
+          ]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    },
+    {
+      "protocol": "wireguard",
+      "tag": "warp",
+      "settings": {
+        "secretKey": "iDkYVlsDay3FBnyBVQrJvqwY+2sh7oJO8Fl+PoySoGc=",
+        "address": [
+          "172.16.0.2/32",
+          "2606:4700:110:8eba:86cf:d84a:df8a:9459/128"
+        ],
+        "peers": [
+          {
+            "endpoint": "engage.cloudflareclient.com:2408",
+            "publicKey": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo="
+          }
+        ],
+        "mtu": 1280,
+        "reserved": "1Cto",
+        "workers": 2,
+        "domainStrategy": "ForceIP"
+      }
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "protocol": "bittorrent",
+        "outboundTag": "block"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "geosite:openai",
+          "geosite:category-gov-ru",
+          "domain:ru"
+        ],
+        "outboundTag": "warp"
+      },
+      {
+        "type": "field",
+        "ip": [
+          "geoip:ru"
+        ],
+        "outboundTag": "warp"
+      }
+    ],
+    "domainStrategy": "IPIfNonMatch"
+  }
+}

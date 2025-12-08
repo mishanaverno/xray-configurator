@@ -1,0 +1,20 @@
+{
+    "rules": [
+    {
+        "type": "field",
+        "protocol": "bittorrent",
+        "outboundTag": "block"
+    },
+    {
+        "type": "field",
+        "domain": ["geosite:openai", "geosite:category-gov-ru", "domain:ru"],
+        "outboundTag": "warp"
+    },
+    {
+        "type": "field",
+        "ip": ["geoip:ru"],
+        "outboundTag": "warp"
+    }
+    ],
+    "domainStrategy": "IPIfNonMatch"
+}
