@@ -12,7 +12,7 @@ RESET="\033[0m"
 
 start() {
     echo "[INFO] Starting the conteiner..."
-    docker run -d --name $NAME --network host -v $(pwd)/xray-conf:/usr/share/xray/ $IMAGE
+    docker run -d --name $NAME --network host -v /usr/local/share/xray-conf:/usr/share/xray/ $IMAGE
     helth
 }
 
