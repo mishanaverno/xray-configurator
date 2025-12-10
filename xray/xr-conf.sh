@@ -39,7 +39,7 @@ update() {
 
 links() {
     echo "[INFO] Looking for links..."
-    docker exec -u 0 --tty=false $NAME bash -c "source /scripts/env.sh && cat \$VOLUME/\$LINK_FILE"
+    docker exec -u 0 $NAME bash -c "source /scripts/env.sh && cat \$VOLUME/\$LINK_FILE"
 }
 
 helth() {
@@ -62,9 +62,6 @@ helth() {
         fi
     done < <(docker ps -a --format "{{.Names}}|{{.Image}}|{{.Status}}") 
 }
-links() {
-    cat 
-}
 
 if [ $# -eq 0 ]; then
     cat <<'EOF'
@@ -80,6 +77,10 @@ Usage: xr-conf [--start|--restart|--stop|--update]
         Stops container.
     --update:
         Update geo data files.
+    --helth:
+        Conteiner health check.
+    --links:
+        Returns share links generated from link.txt template.
 EOF
     exit 1
 fi

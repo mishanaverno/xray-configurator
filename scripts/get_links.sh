@@ -2,4 +2,4 @@
 set -euo pipefail
 LANG=C LC_ALL=C
 
-cat $VOLUME/$LINK_FILE
+echo "OOOOO"

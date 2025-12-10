@@ -2,16 +2,16 @@
 set -euo pipefail
 LANG=C LC_ALL=C
 
-XRAY_BIN=/usr/bin/xray
-VOLUME=/usr/share/xray
-DEFAULTS_DIR=/tmp/xray/templates
-TEMPLATES_DIR=$VOLUME/templates
-CONFIG_FILE=config.json
-VARIABLES_FILE=variables.env
-SECRETS_FILE=secrets.env
-INBOUND_FILE=inbound.json
-OUTBOUND_FILE=outbound.json
-ROUTING_FILE=routing.json
-LINK_FILE=link.txt
+export XRAY_BIN=/usr/bin/xray
+export VOLUME=/usr/share/xray
+export DEFAULTS_DIR=/tmp/xray/templates
+export TEMPLATES_DIR=$VOLUME/templates
+export CONFIG_FILE=config.json
+export VARIABLES_FILE=variables.env
+export SECRETS_FILE=secrets.env
+export INBOUND_FILE=inbound.json
+export OUTBOUND_FILE=outbound.json
+export ROUTING_FILE=routing.json
+export LINK_FILE=link.txt
 
 echo "[env] Variables exported..."
