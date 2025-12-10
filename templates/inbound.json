@@ -1,0 +1,43 @@
+[
+	{
+		"listen": "${XRAY_HOST_IP}",
+		"port": 443,
+		"protocol": "vless",
+		"tag": "reality-in",
+		"settings": {
+			"clients": [
+				{
+					"id": "${XRAY_UUID}",
+					"email": "user1",
+					"flow": "xtls-rprx-vision"
+				}
+			],
+			"decryption": "none"
+		},
+		"streamSettings": {
+			"network": "tcp",
+			"security": "reality",
+			"realitySettings": {
+				"show": false,
+				"dest": "${XRAY_REALITY}:443",
+				"xver": 0,
+				"serverNames": [
+					"${XRAY_REALITY}"
+				],
+				"privateKey": "${XRAY_PRIVATE_KEY}",
+				"minClientVer": "",
+				"maxClientVer": "",
+				"maxTimeDiff": 0,
+				"shortIds": [""]
+			}
+		},
+		"sniffing": {
+			"enabled": true,
+			"destOverride": [
+				"http",
+				"tls",
+				"quic"
+			]
+		}
+	}
+]

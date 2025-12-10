@@ -1,0 +1,1 @@
+vless://${XRAY_UUID}@${XRAY_HOST_IP}:443/?encryption=none&type=tcp&sni=${XRAY_REALITY}&fp=chrome&security=reality&alpn=h2&flow=xtls-rprx-vision&pbk=${XRAY_PUBLIC_KEY}&packetEncoding=xudp#VLESS_XRAY-CONF
