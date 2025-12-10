@@ -13,5 +13,5 @@ mkdir -p "$TEMPLATES_DIR"
 /scripts/generate_config.sh
 
 /scripts/update_geodat.sh
-exec "$@"
-#exec "$XRAY_BIN" -config "$VOLUME/$CONFIG_FILE"
+
+exec "$XRAY_BIN" -config "$VOLUME/$CONFIG_FILE"
