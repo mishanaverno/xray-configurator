@@ -86,6 +86,8 @@ Usage: xr-conf [--start|--restart|--stop|--update]
         Conteiner health check.
     --links:
         Returns share links generated from link.txt template.
+    --clean:
+        Remove local volume files and docker image.
 EOF
     exit 1
 fi
@@ -114,6 +116,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --links)
             links
+            shift
+            ;;
+        --clean)
+            clean
             shift
             ;;
         *)
