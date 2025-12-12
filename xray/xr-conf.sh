@@ -65,8 +65,9 @@ helth() {
 }
 
 clean() {
-    docker rmi $IMAGE
-    rm -rf $LOCAL
+    docker exec -u 0 $NAME bash -c "source /scripts/env.sh && cat rm -rf \$VOLUME/"
+    stop
+    docker rmi $IMAGE 
 }
 if [ $# -eq 0 ]; then
     cat <<'EOF'
