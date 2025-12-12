@@ -4,6 +4,7 @@ LANG=C LC_ALL=C
 
 NAME="xray-conf"
 IMAGE="mishanaverno/xray-conf:latest"
+LOCAL="/usr/local/share/xray-conf"
 
 RED="\033[31m"
 GREEN="\033[32m"
@@ -12,7 +13,7 @@ RESET="\033[0m"
 
 start() {
     echo "[INFO] Starting the conteiner..."
-    docker run -d --name $NAME --network host -v /usr/local/share/xray-conf:/usr/share/xray/ $IMAGE
+    docker run -d --name $NAME --network host -v $LOCAL:/usr/share/xray/ $IMAGE
     helth
 }
 
@@ -63,6 +64,10 @@ helth() {
     done < <(docker ps -a --format "{{.Names}}|{{.Image}}|{{.Status}}") 
 }
 
+clean() {
+    docker rmi $IMAGE
+    rm -rf $LOCAL
+}
 if [ $# -eq 0 ]; then
     cat <<'EOF'
 Usage: xr-conf [--start|--restart|--stop|--update]
