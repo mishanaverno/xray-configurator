@@ -11,7 +11,7 @@ echo "[INFO] Initilizing $LOCAL..."
 mkdir -p $LOCAL
 
 echo "[INFO] Initializing $BOT_ENV in $LOCAL"
-cat > "$TEMPLATES_DIR/$BOT_ENV" <<EOF
+cat > "$LOCAL/$BOT_ENV" <<EOF
 BOT_TOKEN=
 CHAT_ID=
 EOF
