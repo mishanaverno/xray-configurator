@@ -27,6 +27,6 @@ run-bot: build-bot
 tag-bot:
 	docker tag xray-bot:latest mishanaverno/xray-bot:latest
 
-push-conf: build-bot tar-bot
+push-bot: build-bot tag-bot
 	docker login -u mishanaverno
 	docker push mishanaverno/xray-bot:latest
