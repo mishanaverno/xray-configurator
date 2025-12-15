@@ -9,14 +9,16 @@ BOT_ENV="bot.env"
 
 echo "[INFO] Initilizing $LOCAL..."
 mkdir -p $LOCAL
-
-echo "[INFO] Initializing $BOT_ENV in $LOCAL"
-cat > "$LOCAL/$BOT_ENV" <<EOF
+if [[ ! -f "$LOCAL/$BOT_ENV" ]]; then
+    echo "[INFO] Initializing $BOT_ENV in $LOCAL"
+    cat > "$LOCAL/$BOT_ENV" <<EOF
 BOT_TOKEN=
 CHAT_ID=
 EOF
-chmod 600 "$LOCAL/$BOT_ENV" || true
-
+    chmod 666 "$LOCAL/$BOT_ENV" || true
+else 
+    echo "[INFO] $BOT_ENV already exists in $LOCAL"
+fi
 
 echo "[INFO] Downloading xr-conf utility from GitHub..."
 rm -f "$SCRIPT_PATH"
