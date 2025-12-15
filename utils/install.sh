@@ -15,7 +15,7 @@ cat > "$LOCAL/$BOT_ENV" <<EOF
 BOT_TOKEN=
 CHAT_ID=
 EOF
-chmod 600 "$TEMPLATES_DIR/$BOT_ENV" || true
+chmod 600 "$LOCAL/$BOT_ENV" || true
 
 
 echo "[INFO] Downloading xr-conf utility from GitHub..."
