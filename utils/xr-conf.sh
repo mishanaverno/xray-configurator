@@ -65,8 +65,8 @@ startbot() {
     --restart unless-stopped \
     --env-file $LOCAL/bot.env \
     -v /usr/local/bin/xr-conf:/usr/bin/xr-conf:ro \
-    -v /var/run/docker.sock:/var/run/docker.sock
-    -v /usr/bin/docker:/usr/bin/docker:ro
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /usr/bin/docker:/usr/bin/docker:ro \
     $BOT_IMAGE
 }
 
