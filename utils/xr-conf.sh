@@ -70,7 +70,7 @@ startbot() {
 
 stopbot() {
     docker stop $BOT_NAME
-    docker rmi $BOT_IMAGE
+    docker rm -f $BOT_NAME
 }
 
 if [ $# -eq 0 ]; then

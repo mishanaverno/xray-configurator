@@ -15,7 +15,8 @@ async function checkXrConf() {
     try {
         const { stdout } = await execAsync('xr-conf --health');
         return stdout;
-    } catch {
+    } catch (e) {
+        console.log(e);
         return "ERROR"
     }
 }
@@ -23,7 +24,8 @@ async function getLinks() {
     try {
         const { stdout } = await execAsync('xr-conf --links');
         return stdout;
-    } catch {
+    } catch (e){
+        console.log(e)
         return "Error while searching links"
     }
 }
