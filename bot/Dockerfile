@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache bash util-linux gcompat
+RUN apk add --no-cache bash gcompat
 
 WORKDIR /app
 

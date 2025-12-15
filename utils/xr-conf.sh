@@ -16,7 +16,7 @@ RESET="\033[0m"
 start() {
     echo "[INFO] Starting the conteiner..."
     docker run -d --name $CONF_NAME --network host -v $LOCAL:/usr/share/xray/ $CONF_IMAGE
-    helth
+    health
 }
 
 restart() {
@@ -28,8 +28,8 @@ restart() {
 
 stop() {
     echo "[INFO] Stopping the service..."
-    docker stop $CONF_IMAGE
-    helth
+    docker stop $CONF_NAME
+    health
     docker rm -f $CONF_NAME
 }
 
@@ -62,10 +62,12 @@ clean() {
 startbot() {
     docker run -d \
     --name $BOT_NAME \
+    --network host \
     --restart unless-stopped \
     --env-file $LOCAL/bot.env \
     -v /usr/local/bin/xr-conf:/usr/bin/xr-conf:ro \
-    -v /proc:/host/proc:ro \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /usr/bin/docker:/usr/bin/docker:ro \
     $BOT_IMAGE
 }
 
@@ -94,6 +96,10 @@ Usage: xr-conf [--start|--restart|--stop|--update]
         Returns share links generated from link.txt template.
     --clean:
         Remove local volume files and docker image.
+    --startbot:
+        Start monitoring telegram bot.
+    --stopbot:
+        Stop monitoring telegram bot.
 EOF
     exit 1
 fi

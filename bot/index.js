@@ -10,10 +10,10 @@ const ADMINS = process.env.ADMINS.split(',');
 
 const bot = new Telegraf(BOT_TOKEN)
 const { stdout:host } = await execAsync('hostname -i');
-const NC = 'nsenter -t 1 -m -u -i -n -- ';
 async function checkXrConf() {
     try {
-        const { stdout } = await execAsync(`${NC}/usr/bin/xr-conf --health`);
+        const { stdout } = await execAsync(`/usr/bin/xr-conf --health`);
+        console.log(stdout)
         return stdout;
     } catch (e) {
         console.log(e);
@@ -22,7 +22,7 @@ async function checkXrConf() {
 }
 async function getLinks() {
     try {
-        const { stdout } = await execAsync(`${NC}/usr/bin/xr-conf --links`);
+        const { stdout } = await execAsync(`/usr/bin/xr-conf --links`);
         return stdout;
     } catch (e){
         console.log(e)
