@@ -1,8 +1,8 @@
 FROM node:20-alpine
 
-WORKDIR /app
+RUN apk add --no-cache bash util-linux gcompat
 
-RUN apk add --no-cache bash docker-cli
+WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci --only=production
