@@ -2,8 +2,10 @@
 set -euo pipefail
 LANG=C LC_ALL=C
 
-NAME="xray-conf"
-IMAGE="mishanaverno/xray-conf:latest"
+CONF_NAME="xray-conf"
+BOT_NAME="xray-bot"
+CONF_IMAGE="mishanaverno/xray-conf:latest"
+BOT_IMAGE="mishanaverno/xray-bot:latest"
 LOCAL="/usr/local/share/xray-conf"
 
 RED="\033[31m"
@@ -13,62 +15,63 @@ RESET="\033[0m"
 
 start() {
     echo "[INFO] Starting the conteiner..."
-    docker run -d --name $NAME --network host -v $LOCAL:/usr/share/xray/ $IMAGE
+    docker run -d --name $CONF_NAME --network host -v $LOCAL:/usr/share/xray/ $CONF_IMAGE
     helth
 }
 
 restart() {
     echo "[INFO] Restarting the container..."
-    docker exec -u 0 $NAME bash -c "source /scripts/env.sh && /scripts/generate_config.sh"
+    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && /scripts/generate_config.sh"
     stop
     start
 }
 
 stop() {
     echo "[INFO] Stopping the service..."
-    docker stop $NAME
+    docker stop $CONF_IMAGE
     helth
-    docker rm -f $NAME
+    docker rm -f $CONF_NAME
 }
 
 update() {
     echo "[INFO] Update geo files.."
-    docker exec -u 0 $NAME bash -c "source /scripts/env.sh && /scripts/update_geodat.sh"
+    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && /scripts/update_geodat.sh"
     stop
     start
 }
 
 links() {
     echo "[INFO] Looking for links..."
-    docker exec -u 0 $NAME bash -c "source /scripts/env.sh && cat \$VOLUME/\$LINK_FILE"
+    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && cat \$VOLUME/\$LINK_FILE"
 }
 
-helth() {
-    while IFS='|' read -r name container rstatus; do
-        if [[ "$name" == "$NAME" ]]; then
-            while IFS=' ' read -r status meta; do
-                case "$status" in
-                    Up)
-                        comp="$GREEN ✔ $status$RESET $meta"
-                    ;;
-                    Stoped)
-                        comp="$YELLOW ✖ $status$RESET $meta"
-                    ;;
-                    *)
-                        comp="$RED ✖ $status$RESET $meta"
-                    ;;
-                esac
-            done < <(echo "$rstatus")
-            echo -e "$comp"
+health() {
+    while IFS='|' read -r name container status; do
+        if [[ "$name" == "$CONF_NAME" ]]; then
+            echo -e "$status"
         fi
     done < <(docker ps -a --format "{{.Names}}|{{.Image}}|{{.Status}}") 
 }
 
 clean() {
-    docker exec -u 0 $NAME bash -c "source /scripts/env.sh && cat rm -rf \$VOLUME/"
+    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && cat rm -rf \$VOLUME/"
     stop
-    docker rmi $IMAGE 
+    docker rmi $CONF_IMAGE 
 }
+
+startbot() {
+    docker run -d \
+  --name $BOT_NAME \
+  --restart unless-stopped \
+  --env-file $LOCAL/bot.env \
+  -v /usr/local/bin/xr-conf:/usr/bin/xr-conf:ro \
+  $BOT_IMAGE
+}
+
+stopbot() {
+
+}
+
 if [ $# -eq 0 ]; then
     cat <<'EOF'
 Usage: xr-conf [--start|--restart|--stop|--update]
@@ -83,7 +86,7 @@ Usage: xr-conf [--start|--restart|--stop|--update]
         Stops container.
     --update:
         Update geo data files.
-    --helth:
+    --health:
         Conteiner health check.
     --links:
         Returns share links generated from link.txt template.
@@ -111,8 +114,8 @@ while [[ $# -gt 0 ]]; do
             update
             shift
             ;;
-        --helth)
-            helth
+        --health)
+            health
             shift
             ;;
         --links)
@@ -121,6 +124,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --clean)
             clean
+            shift
+            ;;
+        --startbot)
+            startbot
+            shift
+            ;;
+        --stopbot)
+            stopbot
             shift
             ;;
         *)

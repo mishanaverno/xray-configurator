@@ -1,5 +1,5 @@
 install:
-bash -c "$(wget -qO- https://raw.githubusercontent.com/mishanaverno/xray-configurator/main/xray/install.sh)"
+bash -c "$(wget -qO- https://raw.githubusercontent.com/mishanaverno/xray-configurator/main/utils/install.sh)"
 
 start xray:
     xr-conf --start

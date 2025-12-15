@@ -1,2 +1,4 @@
 passwords
+test/**/*
 xray-conf/**/*
+**/node_modules
