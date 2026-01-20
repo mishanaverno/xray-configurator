@@ -10,11 +10,7 @@ mkdir -p "$TEMPLATES_DIR"
 
 /scripts/generate_templates.sh
 
-/scripts/generate_config.sh
-
 /scripts/update_geodat.sh
-
-/scripts/start_xray.sh
 
 spawn-fcgi -s /var/run/fcgiwrap.sock /usr/bin/fcgiwrap
 

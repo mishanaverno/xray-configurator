@@ -13,33 +13,50 @@ GREEN="\033[32m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-start() {
-    echo "[INFO] Starting the conteiner..."
+install() {
+    echo "[INFO] Starting the conteiner with xray..."
     docker run -d \
     --name $CONF_NAME \
     --network host \
     --restart unless-stopped \
     -v $LOCAL:/usr/share/xray/ \
     $CONF_IMAGE
-    echo "[INFO] Starting Xray via local control endpoint..."
+
+    echo "[INFO] Starting the conteiner with monitoring bot..."
+    docker run -d \
+    --name $BOT_NAME \
+    --network host \
+    --restart unless-stopped \
+    --env-file $LOCAL/bot.env \
+    $BOT_IMAGE
+}
+
+uninstall() {
+    docker stop $CONF_NAME
+    docker rm -f $CONF_NAME
+    docker rmi $CONF_IMAGE
+
+    docker stop $BOT_NAME
+    docker rm -f $BOT_NAME
+    docker rmi $BOT_IMAGE
+}
+
+start() {
+    echo "[INFO] Starting Xray..."
     curl -fsS http://127.0.0.1:8080/start >/dev/null
     health
 }
 
 restart() {
-    echo "[INFO] Restarting the container..."
-    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && /scripts/generate_config.sh"
+    echo "[INFO] Restarting Xray..."
     stop
     start
 }
 
 stop() {
-    echo "[INFO] Stopping the service..."
-    echo "[INFO] Stopping Xray via local control endpoint..."
+    echo "[INFO] Stopping Xray..."
     curl -fsS http://127.0.0.1:8080/stop >/dev/null || true
-    docker stop $CONF_NAME
     health
-    docker rm -f $CONF_NAME
 }
 
 update() {
@@ -62,59 +79,39 @@ health() {
     done < <(docker ps -a --format "{{.Names}}|{{.Image}}|{{.Status}}") 
 }
 
-clean() {
-    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && cat rm -rf \$VOLUME/"
-    stop
-    docker rmi $CONF_IMAGE 
-}
-
-startbot() {
-    docker run -d \
-    --name $BOT_NAME \
-    --network host \
-    --restart unless-stopped \
-    --env-file $LOCAL/bot.env \
-    -v /usr/local/bin/xr-conf:/usr/bin/xr-conf:ro \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    -v /usr/bin/docker:/usr/bin/docker:ro \
-    $BOT_IMAGE
-}
-
-stopbot() {
-    docker stop $BOT_NAME
-    docker rm -f $BOT_NAME
-}
 
 if [ $# -eq 0 ]; then
     cat <<'EOF'
-Usage: xr-conf [--start|--restart|--stop|--update]
+Usage: xr-conf []
+    --install:
+        Starts containers with xray and monitoring bot
     --start:
-        Starts container with mounthed volume at ./xray-conf. 
-        Create default templates for inbound, outbound, routing in volume.
-        Generates config.json from template files.
-        Generate link.txt with vless link for vpn clients.
+        Starts xray
     --restart:
         Regenerates config.json and link.txt.
+        Restarts xray
     --stop:
-        Stops container.
+        Stops xray.
     --update:
         Update geo data files.
     --health:
-        Conteiner health check.
+        Health check.
     --links:
         Returns share links generated from link.txt template.
-    --clean:
-        Remove local volume files and docker image.
-    --startbot:
-        Start monitoring telegram bot.
-    --stopbot:
-        Stop monitoring telegram bot.
 EOF
     exit 1
 fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --install)
+            install
+            shift
+            ;;
+        --uninstall))
+            uninstall
+            shift
+            ;;
         --start)
             start
             shift
@@ -137,18 +134,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --links)
             links
-            shift
-            ;;
-        --clean)
-            clean
-            shift
-            ;;
-        --startbot)
-            startbot
-            shift
-            ;;
-        --stopbot)
-            stopbot
             shift
             ;;
         *)
