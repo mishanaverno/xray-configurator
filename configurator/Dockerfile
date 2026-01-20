@@ -1,6 +1,6 @@
 FROM teddysun/xray:latest AS xray
-
 FROM nginx:alpine
+
 RUN apk add --no-cache bash jq gettext coreutils fcgiwrap spawn-fcgi
 COPY --from=xray /usr/bin/xray /usr/bin/xray
 COPY templates/ /tmp/xray/templates/

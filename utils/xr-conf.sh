@@ -108,7 +108,7 @@ while [[ $# -gt 0 ]]; do
             install
             shift
             ;;
-        --uninstall))
+        --uninstall)
             uninstall
             shift
             ;;
