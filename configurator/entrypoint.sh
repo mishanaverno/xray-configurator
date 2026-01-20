@@ -14,4 +14,8 @@ mkdir -p "$TEMPLATES_DIR"
 
 /scripts/update_geodat.sh
 
-exec "$XRAY_BIN" -config "$VOLUME/$CONFIG_FILE"
+/scripts/start_xray.sh
+
+spawn-fcgi -s /var/run/fcgiwrap.sock /usr/bin/fcgiwrap
+
+exec nginx -g "daemon off;"

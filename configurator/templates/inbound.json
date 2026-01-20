@@ -1,7 +1,7 @@
 [
 	{
-		"listen": "${XRAY_HOST_IP}",
-		"port": 443,
+		"listen": "127.0.0.1",
+		"port": 8443,
 		"protocol": "vless",
 		"tag": "reality-in",
 		"settings": {

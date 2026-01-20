@@ -21,6 +21,8 @@ start() {
     --restart unless-stopped \
     -v $LOCAL:/usr/share/xray/ \
     $CONF_IMAGE
+    echo "[INFO] Starting Xray via local control endpoint..."
+    curl -fsS http://127.0.0.1:8080/start >/dev/null
     health
 }
 
@@ -33,6 +35,8 @@ restart() {
 
 stop() {
     echo "[INFO] Stopping the service..."
+    echo "[INFO] Stopping Xray via local control endpoint..."
+    curl -fsS http://127.0.0.1:8080/stop >/dev/null || true
     docker stop $CONF_NAME
     health
     docker rm -f $CONF_NAME
