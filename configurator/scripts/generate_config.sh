@@ -2,7 +2,9 @@
 set -euo pipefail
 LANG=C LC_ALL=C
 
-echo "[generate_config] Building config.json from templates in $TEMPLATES_DIR ..."
+source /scripts/lib.sh
+
+say "Building config.json from templates in $TEMPLATES_DIR ..."
 set -a
 . "$TEMPLATES_DIR/$SECRETS_FILE"
 [ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ] && . "$TEMPLATES_DIR/$VARIABLES_FILE"
@@ -10,7 +12,6 @@ set +a
 
 echo "" > "$VOLUME/$CONFIG_FILE"
 echo "" > "$VOLUME/$LINK_FILE"
-
 
 for f in "$INBOUND_FILE" "$OUTBOUND_FILE" "$ROUTING_FILE" "$LINK_FILE"; do
 [[ -f "$TEMPLATES_DIR/$f" ]] || { echo "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }
@@ -30,3 +31,4 @@ jq -n \
 
 jq . "$VOLUME/$CONFIG_FILE.tmp" >/dev/null
 mv -f "$VOLUME/$CONFIG_FILE.tmp" "$VOLUME/$CONFIG_FILE"
+say "Complete! config.json is ready."

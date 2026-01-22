@@ -13,5 +13,4 @@ export INBOUND_FILE=inbound.json
 export OUTBOUND_FILE=outbound.json
 export ROUTING_FILE=routing.json
 export LINK_FILE=link.txt
-
-echo "[env] Variables exported..."
+export BOT_ENV=bot.env

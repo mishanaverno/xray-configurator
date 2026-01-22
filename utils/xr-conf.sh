@@ -2,27 +2,30 @@
 set -euo pipefail
 LANG=C LC_ALL=C
 
+LOCAL="/usr/local/share/xray-conf"
+
 CONF_NAME="xray-conf"
 BOT_NAME="xray-bot"
 CONF_IMAGE="mishanaverno/xray-conf:latest"
 BOT_IMAGE="mishanaverno/xray-bot:latest"
-LOCAL="/usr/local/share/xray-conf"
 
 RED="\033[31m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-install() {
-    echo "[INFO] Starting the conteiner with xray..."
+up_conf() {
+    echo "[xr-conf] Starting the conteiner with xray..."
     docker run -d \
     --name $CONF_NAME \
     --network host \
     --restart unless-stopped \
     -v $LOCAL:/usr/share/xray/ \
     $CONF_IMAGE
+}
 
-    echo "[INFO] Starting the conteiner with monitoring bot..."
+up_bot() {
+    echo "[xr-conf] Starting the conteiner with monitoring bot..."
     docker run -d \
     --name $BOT_NAME \
     --network host \
@@ -31,43 +34,45 @@ install() {
     $BOT_IMAGE
 }
 
-uninstall() {
+down_conf() {
     docker stop $CONF_NAME
     docker rm -f $CONF_NAME
     docker rmi $CONF_IMAGE
+}
 
+down_bot() {
     docker stop $BOT_NAME
     docker rm -f $BOT_NAME
     docker rmi $BOT_IMAGE
 }
 
-start() {
-    echo "[INFO] Starting Xray..."
-    curl -fsS http://127.0.0.1:8080/start >/dev/null
+start_xray() {
+    echo "[xr-conf] Starting Xray..."
+    curl -fsS http://127.0.0.1:8080/start
+    health
+}
+
+stop_xray() {
+    echo "[xr-conf] Stopping Xray..."
+    curl -fsS http://127.0.0.1:8080/stop
     health
 }
 
 restart() {
-    echo "[INFO] Restarting Xray..."
+    echo "[xr-conf] Restarting Xray..."
     stop
     start
 }
 
-stop() {
-    echo "[INFO] Stopping Xray..."
-    curl -fsS http://127.0.0.1:8080/stop >/dev/null || true
-    health
-}
-
 update() {
-    echo "[INFO] Update geo files.."
+    echo "[xr-conf] Update geo files.."
     docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && /scripts/update_geodat.sh"
     stop
     start
 }
 
 links() {
-    echo "[INFO] Looking for links..."
+    echo "[xr-conf] Looking for links..."
     docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && cat \$VOLUME/\$LINK_FILE"
 }
 
@@ -104,24 +109,32 @@ fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --install)
-            install
+        --up_conf)
+            up_conf
             shift
             ;;
-        --uninstall)
-            uninstall
+        --up_bot)
+            up_bot
             shift
             ;;
-        --start)
-            start
+         --down_conf)
+            down_conf
             shift
             ;;
-        --restart)
-            restart
+        --down_bot)
+            down_bot
             shift
             ;;
-        --stop)
-            stop
+        --start_xray)
+            start_xray
+            shift
+            ;;
+        --restart_xray)
+            restart_xray
+            shift
+            ;;
+        --stop_xray)
+            stop_xray
             shift
             ;;
         --update)

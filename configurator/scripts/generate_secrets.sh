@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 LANG=C LC_ALL=C
 
-
 if [[ ! -f "$TEMPLATES_DIR/$SECRETS_FILE" ]]; then
-  echo "[generate_secrets] Generating fresh UUID and x25519..."
+  say "Generating fresh UUID and x25519..."
   data=$("$XRAY_BIN" x25519 | tr -d $'\r')
   priv=$(echo "$data" | awk -F': ' '/^PrivateKey:/ {gsub(/^[ \t]+|[ \t]+$/,"",$2); print $2}')
   pass=$(echo "$data" | awk -F': ' '/^Password:/   {gsub(/^[ \t]+|[ \t]+$/,"",$2); print $2}')
   uuid="$("$XRAY_BIN" uuid | tr -d $'\r' | head -n1)"
   host_ip=$(hostname -i | awk '{print $1}')
-  echo "Server accessible at: $host_ip:<port>"
-  echo "[generate_secrets] Secrets generated: UUID=$uuid PUB_KEY=$pass PRIV_KEY=$priv"
+  say "Server accessible at: $host_ip:<port>"
+  say "Secrets generated: UUID=$uuid PUB_KEY=$pass PRIV_KEY=$priv"
 
   cat > "$TEMPLATES_DIR/$SECRETS_FILE" <<EOF
 XRAY_UUID=$uuid
@@ -19,7 +19,7 @@ XRAY_PRIVATE_KEY=$priv
 XRAY_PUBLIC_KEY=$pass
 XRAY_HOST_IP=$host_ip
 EOF
-  chmod 600 "$TEMPLATES_DIR/$SECRETS_FILE" || true
+  chmod 666 "$TEMPLATES_DIR/$SECRETS_FILE" || true
 else
-  echo "[generate_secrets] secrets.env already exists"
+  say "secrets.env already exists"
 fi
