@@ -6,7 +6,7 @@ source /scripts/lib.sh
 
 say "Building config.json from templates in $TEMPLATES_DIR ..."
 set -a
-. "$$VOLUME/$SECRETS_FILE"
+. "$VOLUME/$SECRETS_FILE"
 [ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ] && . "$TEMPLATES_DIR/$VARIABLES_FILE"
 set +a
 
