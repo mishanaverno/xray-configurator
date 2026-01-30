@@ -26,15 +26,15 @@ up_conf() {
 }
 
 up_bot() {
-    if [[ ! -f "$LOCAL_OVERRIDE/$BOT_ENV" ]]; then
-    echo "Initializing $BOT_ENV in $VOLUME"
-    cat > "$LOCAL_OVERRIDE/$BOT_ENV" <<EOF
+    if [[ ! -f "$LOCAL/bot.env" ]]; then
+    echo "Initializing bot.env in $LOCAL"
+    cat > "$LOCAL/bot.env" <<EOF
 BOT_TOKEN=
 CHAT_ID=
 EOF
-        chmod 666 $LOCAL_OVERRIDE/$BOT_ENV
+        chmod 666 $LOCAL/bot.env
     else 
-        say "$BOT_ENV already exists in $LOCAL_OVERRIDE"
+        echo "[xr-conf] bot.env already exists in $LOCAL/bot.env"
     fi
     echo "[xr-conf] Starting the conteiner with monitoring bot..."
     docker pull $BOT_IMAGE
@@ -86,7 +86,7 @@ update() {
 
 links() {
     echo "[xr-conf] Looking for links..."
-    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && cat \$VOLUME/\$LINK_FILE"
+    curl -s http://127.0.0.1:8080/links
 }
 
 
