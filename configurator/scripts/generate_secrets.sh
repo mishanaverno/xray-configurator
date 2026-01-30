@@ -21,6 +21,7 @@ XRAY_PRIVATE_KEY=$priv
 XRAY_PUBLIC_KEY=$pass
 XRAY_HOST_IP=$host_ip
 EOF
+  chmod 666 "$TEMPLATES_DIR/$SECRETS_FILE"
 else
   say "secrets.env already exists"
 fi

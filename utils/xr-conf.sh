@@ -17,7 +17,7 @@ RESET="\033[0m"
 up_conf() {
     echo "[xr-conf] Starting the conteiner with xray..."
     docker pull $CONF_IMAGE
-    docker run -d --rm \
+    docker run -d \
     --name $CONF_NAME \
     --network host \
     --restart unless-stopped \
@@ -38,7 +38,7 @@ EOF
     fi
     echo "[xr-conf] Starting the conteiner with monitoring bot..."
     docker pull $BOT_IMAGE
-    docker run -d --rm \
+    docker run -d \
     --name $BOT_NAME \
     --network host \
     --restart unless-stopped \
@@ -47,29 +47,28 @@ EOF
 }
 
 down_conf() {
-    docker stop $CONF_NAME
+    docker rm -f $CONF_NAME
 }
 
 down_bot() {
-    docker stop $BOT_NAME
+    docker rm -f $BOT_NAME
 }
 
 start_xray() {
     echo "[xr-conf] Starting Xray..."
     curl -s http://127.0.0.1:8080/start
-    health
+    health_xray
 }
 
 stop_xray() {
     echo "[xr-conf] Stopping Xray..."
     curl -s http://127.0.0.1:8080/stop
-    health
+    health_xray
 }
 
 health_xray() {
     echo "[xr-conf] CHecking Xray..."
     curl -s http://127.0.0.1:8080/health
-    health
 }
 
 restart_xray() {

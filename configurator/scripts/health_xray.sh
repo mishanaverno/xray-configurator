@@ -32,8 +32,13 @@ if ! kill -0 "$XRAY_PID" 2>/dev/null; then
 fi
 
 # Port listening?
-if ! ss -lntp 2>/dev/null | grep -q ":$XRAY_PORT .*pid=$XRAY_PID,"; then
-  fail "Xray is not listening on port $XRAY_PORT"
+if command -v timeout >/dev/null 2>&1; then
+  timeout 1 bash -c "echo >/dev/tcp/127.0.0.1/$XRAY_PORT" >/dev/null 2>&1 \
+    || fail "Xray port $XRAY_PORT is not reachable on 127.0.0.1"
+else
+  # без timeout (может потенциально зависнуть в экзотических случаях)
+  ( echo >/dev/tcp/127.0.0.1/$XRAY_PORT ) >/dev/null 2>&1 \
+    || fail "Xray port $XRAY_PORT is not reachable on 127.0.0.1"
 fi
 
 # Healthy

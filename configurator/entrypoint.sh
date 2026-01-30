@@ -25,6 +25,6 @@ fi
 
 /scripts/update_geodat.sh
 
-spawn-fcgi -s /var/run/fcgiwrap.sock -M 660 -u nginx -g nginx /usr/bin/fcgiwrap
+umask 002 && spawn-fcgi -s /var/run/fcgiwrap.sock -M 660 -u nginx -g nginx /usr/bin/fcgiwrap
 
 exec nginx -g "daemon off;"
