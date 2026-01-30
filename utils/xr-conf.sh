@@ -16,7 +16,8 @@ RESET="\033[0m"
 
 up_conf() {
     echo "[xr-conf] Starting the conteiner with xray..."
-    docker run -d \
+    docker pull $CONF_IMAGE
+    docker run -d --rm \
     --name $CONF_NAME \
     --network host \
     --restart unless-stopped \
@@ -25,8 +26,19 @@ up_conf() {
 }
 
 up_bot() {
+    if [[ ! -f "$LOCAL_OVERRIDE/$BOT_ENV" ]]; then
+    echo "Initializing $BOT_ENV in $VOLUME"
+    cat > "$LOCAL_OVERRIDE/$BOT_ENV" <<EOF
+BOT_TOKEN=
+CHAT_ID=
+EOF
+        chmod 666 $LOCAL_OVERRIDE/$BOT_ENV
+    else 
+        say "$BOT_ENV already exists in $LOCAL_OVERRIDE"
+    fi
     echo "[xr-conf] Starting the conteiner with monitoring bot..."
-    docker run -d \
+    docker pull $BOT_IMAGE
+    docker run -d --rm \
     --name $BOT_NAME \
     --network host \
     --restart unless-stopped \
@@ -36,14 +48,10 @@ up_bot() {
 
 down_conf() {
     docker stop $CONF_NAME
-    docker rm -f $CONF_NAME
-    docker rmi $CONF_IMAGE
 }
 
 down_bot() {
     docker stop $BOT_NAME
-    docker rm -f $BOT_NAME
-    docker rmi $BOT_IMAGE
 }
 
 start_xray() {
@@ -60,7 +68,7 @@ stop_xray() {
 
 health_xray() {
     echo "[xr-conf] CHecking Xray..."
-    curl -s http://127.0.0.1:8080/stop
+    curl -s http://127.0.0.1:8080/health
     health
 }
 

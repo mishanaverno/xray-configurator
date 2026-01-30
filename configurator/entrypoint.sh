@@ -19,17 +19,6 @@ else
     say "$TEMPLATES_DIR already exists."
 fi
 
-if [[ ! -f "$VOLUME/$BOT_ENV" ]]; then
-    say "Initializing $BOT_ENV in $VOLUME"
-    cat > "$VOLUME/$BOT_ENV" <<EOF
-BOT_TOKEN=
-CHAT_ID=
-EOF
-    chmod 666 $VOLUME/$BOT_ENV
-else 
-    say "$BOT_ENV already exists in $VOLUME"
-fi
-
 /scripts/generate_secrets.sh
 
 /scripts/generate_templates.sh
