@@ -7,14 +7,14 @@ source /scripts/lib.sh
 
 if [[ ! -f "$VOLUME" ]]; then
     say "Initializing $VOLUME dir..."
-    mkdir -p "$VOLUME" && chown -R root:xray "$VOLUME" && chmod 2775 "$VOLUME"
+    mkdir -p "$VOLUME" && chown -R root:xray "$VOLUME" && chmod 2664 "$VOLUME"
 else 
     say "$VOLUME already exists."
 fi
 
 if [[ ! -f "$TEMPLATES_DIR" ]]; then
     say "Initializing $TEMPLATES_DIR dir..."
-    mkdir -p "$TEMPLATES_DIR" && chmod 2777 "$TEMPLATES_DIR"
+    mkdir -p "$TEMPLATES_DIR" && chmod 2666 "$TEMPLATES_DIR"
 else 
     say "$TEMPLATES_DIR already exists."
 fi
