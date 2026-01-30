@@ -14,7 +14,7 @@ echo "" > "$VOLUME/$CONFIG_FILE"
 echo "" > "$VOLUME/$LINK_FILE"
 
 for f in "$INBOUND_FILE" "$OUTBOUND_FILE" "$ROUTING_FILE" "$LINK_FILE"; do
-[[ -f "$TEMPLATES_DIR/$f" ]] || { echo "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }
+[[ -f "$TEMPLATES_DIR/$f" ]] || { say "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }
 done
 
 inbounds=$(envsubst < "$TEMPLATES_DIR/$INBOUND_FILE" | jq 'if type=="array" then . else error("inbound.json must be array") end' )
