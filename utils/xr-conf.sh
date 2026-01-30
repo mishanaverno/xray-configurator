@@ -93,60 +93,55 @@ links() {
 if [ $# -eq 0 ]; then
     cat <<'EOF'
 Usage: xr-conf []
-    --install:
-        Starts containers with xray and monitoring bot
-    --start:
-        Starts xray
-    --restart:
-        Regenerates config.json and link.txt.
-        Restarts xray
-    --stop:
-        Stops xray.
-    --update:
-        Update geo data files.
-    --health:
-        Health check.
-    --links:
-        Returns share links generated from link.txt template.
+    --up-conf
+    --down-conf
+    --up-bot
+    --down-bot
+    --start-xray
+    --stop-xray
+    --restart-xray
+    --health-xray
+    --links
+    --update-geo
 EOF
     exit 1
 fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --up_conf)
+        --up-conf)
             up_conf
             shift
             ;;
-        --up_bot)
+        --up-bot)
             up_bot
             shift
             ;;
-         --down_conf)
+         --down-conf)
             down_conf
             shift
             ;;
-        --down_bot)
+        --down-bot)
             down_bot
             shift
             ;;
-        --start_xray)
+        --start-xray)
             start_xray
             shift
             ;;
-        --restart_xray)
+        --restart-xray)
             restart_xray
             shift
             ;;
-        --stop_xray)
+        --stop-xray)
             stop_xray
             shift
             ;;
-        --update)
+        --update-geo)
             update
             shift
             ;;
-        --health_xray)
+        --health-xray)
             health_xray
             shift
             ;;
