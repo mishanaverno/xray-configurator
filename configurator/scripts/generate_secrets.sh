@@ -3,6 +3,8 @@ set -euo pipefail
 
 LANG=C LC_ALL=C
 
+source /scripts/lib.sh
+
 if [[ ! -f "$TEMPLATES_DIR/$SECRETS_FILE" ]]; then
   say "Generating fresh UUID and x25519..."
   data=$("$XRAY_BIN" x25519 | tr -d $'\r')
@@ -19,7 +21,6 @@ XRAY_PRIVATE_KEY=$priv
 XRAY_PUBLIC_KEY=$pass
 XRAY_HOST_IP=$host_ip
 EOF
-  chmod 666 "$TEMPLATES_DIR/$SECRETS_FILE" || true
 else
   say "secrets.env already exists"
 fi

@@ -48,17 +48,23 @@ down_bot() {
 
 start_xray() {
     echo "[xr-conf] Starting Xray..."
-    curl -fsS http://127.0.0.1:8080/start
+    curl -s http://127.0.0.1:8080/start
     health
 }
 
 stop_xray() {
     echo "[xr-conf] Stopping Xray..."
-    curl -fsS http://127.0.0.1:8080/stop
+    curl -s http://127.0.0.1:8080/stop
     health
 }
 
-restart() {
+health_xray() {
+    echo "[xr-conf] CHecking Xray..."
+    curl -s http://127.0.0.1:8080/stop
+    health
+}
+
+restart_xray() {
     echo "[xr-conf] Restarting Xray..."
     stop
     start
@@ -74,14 +80,6 @@ update() {
 links() {
     echo "[xr-conf] Looking for links..."
     docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && cat \$VOLUME/\$LINK_FILE"
-}
-
-health() {
-    while IFS='|' read -r name container status; do
-        if [[ "$name" == "$CONF_NAME" ]]; then
-            echo -e "$status"
-        fi
-    done < <(docker ps -a --format "{{.Names}}|{{.Image}}|{{.Status}}") 
 }
 
 

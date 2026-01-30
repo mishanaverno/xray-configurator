@@ -25,6 +25,7 @@ if [[ ! -f "$VOLUME/$BOT_ENV" ]]; then
 BOT_TOKEN=
 CHAT_ID=
 EOF
+    chmod 666 $VOLUME/$BOT_ENV
 else 
     say "$BOT_ENV already exists in $VOLUME"
 fi
