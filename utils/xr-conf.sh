@@ -146,8 +146,8 @@ while [[ $# -gt 0 ]]; do
             update
             shift
             ;;
-        --health)
-            health
+        --health_xray)
+            health_xray
             shift
             ;;
         --links)
