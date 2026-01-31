@@ -62,7 +62,7 @@ async function start() {
             lastmsg = await bot.telegram.sendMessage(CHAT_ID, `🔴 Proxy is down on host ${host}.\n ${body}`);
         }
         if (!lastState && ok) {
-            bot.telegram.deleteMessages(lastmsg.chat.id, lastmsg.message_id);
+            bot.telegram.deleteMessage(lastmsg.chat.id, lastmsg.message_id);
             const msg = await bot.telegram.sendMessage(CHAT_ID, `🟢 Proxy is recovered on host ${host}.\n ${body}`);
             setTimeout(() => {
                 ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
