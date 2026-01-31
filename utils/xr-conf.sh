@@ -43,7 +43,7 @@ up_conf() {
 
 up_bot() {
     if [[ ! -f "$LOCAL/bot/bot.env" ]]; then
-        if [[ ! -f "$LOCAL" ]]; then
+        if [[ ! -f "$LOCAL/bot" ]]; then
             echo "Initializing $LOCAL/bot dir..."
             mkdir -p "$LOCAL/bot"
             TOKEN=$(read_nonempty "Enter BOT_TOKEN value: ")
