@@ -42,24 +42,24 @@ up_conf() {
 }
 
 up_bot() {
-    if [[ ! -f "$LOCAL" ]]; then
-        echo "Initializing $LOCAL/bot dir..."
-        mkdir -p "$LOCAL/bot"
-        TOKEN=$(read_nonempty "Enter BOT_TOKEN value: ")
-        CHAT=$(read_nonempty "Enter CHAT_ID value: ")
-        if [[ ! -f "$LOCAL/bot/bot.env" ]]; then
-            echo "Initializing bot.env in $LOCAL/bot"
-            cat > "$LOCAL/bot/bot.env" <<EOF
+    if [[ ! -f "$LOCAL/bot/bot.env" ]]; then
+        if [[ ! -f "$LOCAL" ]]; then
+            echo "Initializing $LOCAL/bot dir..."
+            mkdir -p "$LOCAL/bot"
+            TOKEN=$(read_nonempty "Enter BOT_TOKEN value: ")
+            CHAT=$(read_nonempty "Enter CHAT_ID value: ")
+            
+        else 
+            echo "$LOCAL/bot already exists."
+        fi
+        echo "Initializing bot.env in $LOCAL/bot/bot"
+        cat > "$LOCAL/bot/bot.env" <<EOF
 BOT_TOKEN=$TOKEN
 CHAT_ID=$CHAT
 EOF
-        else 
-            echo "[xr-conf] bot.env already exists in $LOCAL/bot/bot.env"
-        fi
     else 
-        echo "$LOCAL/bot/bot already exists."
+        echo "[xr-conf] bot.env already exists in $LOCAL/bot/bot.env"
     fi
-
     echo "[xr-conf] Starting the conteiner with monitoring bot..."
     docker pull $BOT_IMAGE
     docker run -d \
