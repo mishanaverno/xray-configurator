@@ -98,15 +98,14 @@ health_xray() {
 
 restart_xray() {
     echo "[xr-conf] Restarting Xray..."
-    stop
-    start
+    stop_xray
+    start_xray
 }
 
 update() {
     echo "[xr-conf] Update geo files.."
-    docker exec -u 0 $CONF_NAME bash -c "source /scripts/env.sh && /scripts/update_geodat.sh"
-    stop
-    start
+    curl -s http://127.0.0.1:8080/update
+    restart_xray
 }
 
 links() {
