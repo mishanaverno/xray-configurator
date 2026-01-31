@@ -43,7 +43,7 @@ up_conf() {
 
 up_bot() {
     if [[ ! -f "$LOCAL" ]]; then
-        say "Initializing $LOCAL/bot dir..."
+        echo "Initializing $LOCAL/bot dir..."
         mkdir -p "$LOCAL/bot"
     else 
         echo "$LOCAL/bot already exists."
