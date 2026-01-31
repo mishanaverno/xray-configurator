@@ -15,7 +15,7 @@ YELLOW="\033[33m"
 RESET="\033[0m"
 
 if [[ ! -f "$LOCAL" ]]; then
-    say "Initializing $LOCAL dir..."
+    echo "Initializing $LOCAL dir..."
     mkdir -p "$LOCAL"
 else 
     echo "$LOCAL already exists."
