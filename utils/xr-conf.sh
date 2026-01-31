@@ -53,12 +53,11 @@ up_bot() {
 BOT_TOKEN=$TOKEN
 CHAT_ID=$CHAT
 EOF
-            chmod 644 $LOCAL/bot.env
         else 
-            echo "[xr-conf] bot.env already exists in $LOCAL/bot.env"
+            echo "[xr-conf] bot.env already exists in $LOCAL/bot/bot.env"
         fi
     else 
-        echo "$LOCAL/bot already exists."
+        echo "$LOCAL/bot/bot already exists."
     fi
 
     echo "[xr-conf] Starting the conteiner with monitoring bot..."
