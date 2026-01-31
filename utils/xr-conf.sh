@@ -2,7 +2,7 @@
 set -euo pipefail
 LANG=C LC_ALL=C
 
-LOCAL="/usr/local/share/xray-conf"
+LOCAL="/usr/local/share/xray"
 
 CONF_NAME="xray-conf"
 BOT_NAME="xray-bot"
@@ -14,6 +14,22 @@ GREEN="\033[32m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
+if [[ ! -f "$LOCAL" ]]; then
+    say "Initializing $LOCAL dir..."
+    mkdir -p "$LOCAL"
+else 
+    echo "$LOCAL already exists."
+fi
+
+read_nonempty() {
+  local prompt="$1" v
+  while true; do
+    read -rp "$prompt" v
+    [ -n "$v" ] && { printf '%s' "$v"; return; }
+    echo "Значение не может быть пустым."
+  done
+}
+
 up_conf() {
     echo "[xr-conf] Starting the conteiner with xray..."
     docker pull $CONF_IMAGE
@@ -21,18 +37,27 @@ up_conf() {
     --name $CONF_NAME \
     --network host \
     --restart unless-stopped \
-    -v $LOCAL:/usr/share/xray/ \
+    -v $LOCAL/conf:/usr/share/xray/ \
     $CONF_IMAGE
 }
 
 up_bot() {
-    if [[ ! -f "$LOCAL/bot.env" ]]; then
-    echo "Initializing bot.env in $LOCAL"
-    cat > "$LOCAL/bot.env" <<EOF
-BOT_TOKEN=
-CHAT_ID=
+    if [[ ! -f "$LOCAL" ]]; then
+        say "Initializing $LOCAL/bot dir..."
+        mkdir -p "$LOCAL/bot"
+    else 
+        echo "$LOCAL/bot already exists."
+    fi
+
+    TOKEN=$(read_nonempty "Enter BOT_TOKEN value: ")
+    CHAT=$(read_nonempty "Enter CHAT_ID value: ")
+    if [[ ! -f "$LOCAL/bot/bot.env" ]]; then
+        echo "Initializing bot.env in $LOCAL/bot"
+        cat > "$LOCAL/bot/bot.env" <<EOF
+BOT_TOKEN=$TOKEN
+CHAT_ID=$CHAT
 EOF
-        chmod 666 $LOCAL/bot.env
+        chmod 644 $LOCAL/bot.env
     else 
         echo "[xr-conf] bot.env already exists in $LOCAL/bot.env"
     fi
@@ -42,7 +67,7 @@ EOF
     --name $BOT_NAME \
     --network host \
     --restart unless-stopped \
-    --env-file $LOCAL/bot.env \
+    --env-file $LOCAL/bot/bot.env \
     $BOT_IMAGE
 }
 
