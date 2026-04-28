@@ -15,12 +15,26 @@ GREEN="\033[32m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-if [[ ! -f "$LOCAL" ]]; then
-    echo "Initializing $LOCAL dir..."
-    mkdir -p "$LOCAL"
-else 
-    echo "$LOCAL already exists."
-fi
+ensure_dir() {
+    local dir="$1"
+
+    if [[ -e "$dir" && ! -d "$dir" ]]; then
+        echo "[xr-conf] ERROR: $dir exists and is not a directory" >&2
+        exit 1
+    fi
+
+    if [[ ! -d "$dir" ]]; then
+        echo "[xr-conf] Initializing $dir dir..."
+        mkdir -p "$dir"
+    fi
+}
+
+ensure_local_dirs() {
+    ensure_dir "$LOCAL"
+    ensure_dir "$LOCAL/conf"
+    ensure_dir "$LOCAL/bot"
+    ensure_dir "$LOCAL/bot-data"
+}
 
 read_nonempty() {
   local prompt="$1" v
@@ -46,6 +60,7 @@ validate_reality_hostname() {
 }
 
 up_conf() {
+    ensure_local_dirs
     echo "[xr-conf] Starting the conteiner with xray..."
     docker pull $CONF_IMAGE
     docker run -d \
@@ -57,12 +72,9 @@ up_conf() {
 }
 
 up_bot() {
+    ensure_local_dirs
     if [[ ! -f "$LOCAL/bot/bot.env" ]]; then
-        if [[ ! -f "$LOCAL/bot" ]]; then
-            echo "Initializing $LOCAL/bot dir..."
-            mkdir -p "$LOCAL/bot"
-        fi 
-        echo "Initializing bot.env in $LOCAL/bot/bot"
+        echo "Initializing bot.env in $LOCAL/bot/bot.env"
         TOKEN=$(read_nonempty "Enter BOT_TOKEN value: ")
         CHAT=$(read_nonempty "Enter CHAT_ID value: ")
         cat > "$LOCAL/bot/bot.env" <<EOF
@@ -79,6 +91,7 @@ EOF
     --network host \
     --restart unless-stopped \
     --env-file $LOCAL/bot/bot.env \
+    -v $LOCAL/bot-data:/data \
     $BOT_IMAGE
 }
 
