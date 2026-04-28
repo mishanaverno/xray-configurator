@@ -12,25 +12,26 @@ set -a
 set +a
 export XRAY_REALITY
 
-echo "" > "$VOLUME/$CONFIG_FILE"
-echo "" > "$VOLUME/$LINK_FILE"
-
 for f in "$INBOUND_FILE" "$OUTBOUND_FILE" "$ROUTING_FILE" "$LINK_FILE"; do
-[[ -f "$TEMPLATES_DIR/$f" ]] || { say "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }
+  [[ -f "$TEMPLATES_DIR/$f" ]] || { say "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }
 done
 
 inbounds=$(envsubst < "$TEMPLATES_DIR/$INBOUND_FILE" | jq 'if type=="array" then . else error("inbound.json must be array") end' )
 outbounds=$(envsubst < "$TEMPLATES_DIR/$OUTBOUND_FILE" | jq 'if type=="array" then . else error("outbound.json must be array") end' )
 routing=$(envsubst < "$TEMPLATES_DIR/$ROUTING_FILE" | jq 'if type=="object" then . else error("routing.json must be object") end' )
-echo $(envsubst < "$TEMPLATES_DIR/$LINK_FILE") > "$VOLUME/$LINK_FILE"
+link_tmp="$VOLUME/$LINK_FILE.tmp"
+config_tmp="$VOLUME/$CONFIG_FILE.tmp"
+
+envsubst < "$TEMPLATES_DIR/$LINK_FILE" > "$link_tmp"
 
 jq -n \
 --argjson inbounds "$inbounds" \
 --argjson outbounds "$outbounds" \
 --argjson routing "$routing" \
 '{ log:{loglevel:(env.XRAY_LOG_LEVEL // "info")}, inbounds:$inbounds, outbounds:$outbounds, routing:$routing }' \
-> "$VOLUME/$CONFIG_FILE.tmp"
+> "$config_tmp"
 
-jq . "$VOLUME/$CONFIG_FILE.tmp" >/dev/null
-mv -f "$VOLUME/$CONFIG_FILE.tmp" "$VOLUME/$CONFIG_FILE"
+jq . "$config_tmp" >/dev/null
+mv -f "$config_tmp" "$VOLUME/$CONFIG_FILE"
+mv -f "$link_tmp" "$VOLUME/$LINK_FILE"
 say "Complete! config.json is ready."

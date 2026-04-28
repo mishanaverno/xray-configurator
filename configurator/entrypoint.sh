@@ -5,14 +5,24 @@ LANG=C LC_ALL=C
 source /scripts/env.sh
 source /scripts/lib.sh
 
-if [[ ! -f "$VOLUME" ]]; then
+if [[ -e "$VOLUME" && ! -d "$VOLUME" ]]; then
+    say "[ERROR] $VOLUME exists and is not a directory" >&2
+    exit 1
+fi
+
+if [[ ! -d "$VOLUME" ]]; then
     say "Initializing $VOLUME dir..."
     mkdir -p "$VOLUME" && chown -R root:xray "$VOLUME" && chmod 2775 "$VOLUME"
 else 
     say "$VOLUME already exists."
 fi
 
-if [[ ! -f "$TEMPLATES_DIR" ]]; then
+if [[ -e "$TEMPLATES_DIR" && ! -d "$TEMPLATES_DIR" ]]; then
+    say "[ERROR] $TEMPLATES_DIR exists and is not a directory" >&2
+    exit 1
+fi
+
+if [[ ! -d "$TEMPLATES_DIR" ]]; then
     say "Initializing $TEMPLATES_DIR dir..."
     mkdir -p "$TEMPLATES_DIR" && chmod 2777 "$TEMPLATES_DIR"
 else 
@@ -23,7 +33,9 @@ fi
 
 /scripts/generate_templates.sh
 
-/scripts/update_geodat.sh
+if ! /scripts/update_geodat.sh --plain; then
+    say "[WARN] geodat update failed; keeping existing geo files"
+fi
 
 umask 002 && spawn-fcgi -s /var/run/fcgiwrap.sock -M 660 -u nginx -g nginx /usr/bin/fcgiwrap
 

@@ -13,7 +13,7 @@ if [[ ! -f "$VOLUME/$SECRETS_FILE" ]]; then
   uuid="$("$XRAY_BIN" uuid | tr -d $'\r' | head -n1)"
   host_ip=$(hostname -i | awk '{print $1}')
   say "Server accessible at: $host_ip:<port>"
-  say "Secrets generated: UUID=$uuid PUB_KEY=$pass PRIV_KEY=$priv"
+  say "Secrets generated: UUID=$uuid PUB_KEY=$pass"
 
   cat > "$VOLUME/$SECRETS_FILE" <<EOF
 XRAY_UUID=$uuid
