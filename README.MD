@@ -239,17 +239,16 @@ XRAY_SHORT_IDS='[""]'
 
 ## Команды бота
 
-```text
-/health
-/restart
-/create_user <username>
-/delete_user <username>
-/link <username>
-/links <username>
-/client_routing
-/add_sni <hostname>
-/sni_list
-```
+- `/help` - показать подсказку со всеми командами.
+- `/health` - проверить состояние Xray и Reality/SNI.
+- `/restart` - пересобрать config и перезапустить Xray. Используйте после создания/удаления пользователя.
+- `/create_user <username>` - создать пользователя, сгенерировать shortId и добавить его в `XRAY_SHORT_IDS`.
+- `/delete_user <username>` - удалить пользователя и убрать его shortId из `XRAY_SHORT_IDS`.
+- `/link <username>` - получить VLESS-ссылку пользователя с `sid`.
+- `/links <username>` - алиас для `/link`.
+- `/client_routing` - получить клиентские routing-правила.
+- `/add_sni <hostname>` - добавить SNI-кандидат для Reality fallback.
+- `/sni_list` - показать список SNI-кандидатов.
 
 ## Как использовать сервис
 

@@ -7,6 +7,39 @@ const { fetchConfig } = require("./fetch-conf.js");
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
 const USERNAME_RE = /^[A-Za-z0-9_-]{1,64}$/;
+const HELP_MESSAGE = [
+    'Команды управления Xray:',
+    '',
+    '/help',
+    'Показать эту подсказку.',
+    '',
+    '/health',
+    'Проверить, запущен ли Xray и проходит ли Reality/SNI health check.',
+    '',
+    '/restart',
+    'Пересобрать config.json из шаблонов и перезапустить Xray. Нужен после создания/удаления пользователя и ручных правок templates.',
+    '',
+    '/create_user <username>',
+    'Создать пользователя, сгенерировать ему shortId, сохранить в Redis и добавить shortId в XRAY_SHORT_IDS.',
+    '',
+    '/delete_user <username>',
+    'Удалить пользователя из Redis и убрать его shortId из XRAY_SHORT_IDS.',
+    '',
+    '/link <username>',
+    'Получить VLESS-ссылку пользователя с подставленным sid.',
+    '',
+    '/links <username>',
+    'То же самое, что /link.',
+    '',
+    '/client_routing',
+    'Получить JSON с клиентскими правилами маршрутизации.',
+    '',
+    '/add_sni <hostname>',
+    'Добавить hostname в список SNI-кандидатов для Reality fallback.',
+    '',
+    '/sni_list',
+    'Показать текущий список SNI-кандидатов.'
+].join('\n');
 
 async function replyLongText(ctx, text, ttlMs) {
     const messages = [];
@@ -101,6 +134,10 @@ async function start() {
         ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
             .catch(() => {});
         }, 10000);
+    });
+
+    bot.command('help', async ctx => {
+        await replyLongText(ctx, HELP_MESSAGE, 60000);
     });
 
     bot.command('create_user', async ctx => {
