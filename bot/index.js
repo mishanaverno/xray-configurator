@@ -13,7 +13,7 @@ async function start() {
     const bot = new Telegraf(BOT_TOKEN);
 
     bot.use(async (ctx, next) => {
-        if (ctx.chat.id !== CHAT_ID) {
+        if (ctx.chat && ctx.chat.id && ctx.chat.id !== CHAT_ID) {
             console.log(ctx.chat.id)
             return 
         }
@@ -42,6 +42,34 @@ async function start() {
         ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
             .catch(() => {});
         }, 60000);
+    });
+
+    bot.command('sni_list', async ctx => {
+        const { ok, body } = await fetchConfig('/sni/list');
+        const msg = await ctx.reply(`${ok ? '🟢' : '🔴'} SNI candidates:\n${body || 'empty'}`);
+        setTimeout(() => {
+        ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
+            .catch(() => {});
+        }, 60000);
+    });
+
+    bot.command('add_sni', async ctx => {
+        const candidate = ctx.message.text.split(/\s+/)[1];
+        if (!candidate) {
+            const msg = await ctx.reply('Usage: /add_sni example.com');
+            setTimeout(() => {
+            ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
+                .catch(() => {});
+            }, 10000);
+            return;
+        }
+
+        const { ok, body } = await fetchConfig(`/sni/add?sni=${encodeURIComponent(candidate)}`);
+        const msg = await ctx.reply(`${ok ? '🟢' : '🔴'} ${body}`);
+        setTimeout(() => {
+        ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
+            .catch(() => {});
+        }, 10000);
     });
 
     bot.command('restart', async ctx => {

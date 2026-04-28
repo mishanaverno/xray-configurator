@@ -38,8 +38,16 @@ fi
 
 rm -f "$XRAY_PID_FILE"
 
+if ! /scripts/ensure_reality.sh >"$LOG_FILE" 2>&1; then
+  http_error
+  say "Xray start failed"
+  say "SNI check failed"
+  cat "$LOG_FILE"
+  exit 1
+fi
+
 # generate_config — буферизуем, но не трогаем вывод
-if ! /scripts/generate_config.sh >"$LOG_FILE" 2>&1; then
+if ! /scripts/generate_config.sh >>"$LOG_FILE" 2>&1; then
   http_error
   say "Xray start failed"
   say "Generate config failed"

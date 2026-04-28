@@ -1,7 +1,7 @@
 FROM teddysun/xray:latest AS xray
-FROM nginx:alpine
+FROM nginx:stable-alpine-slim
 
-RUN apk add --no-cache bash jq gettext coreutils fcgiwrap spawn-fcgi
+RUN apk add --no-cache bash jq gettext coreutils fcgiwrap spawn-fcgi openssl
 
 RUN addgroup -S xray || true \
  && adduser nginx xray || true \

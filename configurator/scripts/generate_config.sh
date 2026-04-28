@@ -8,7 +8,9 @@ say "Building config.json from templates in $TEMPLATES_DIR ..."
 set -a
 . "$VOLUME/$SECRETS_FILE"
 [ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ] && . "$TEMPLATES_DIR/$VARIABLES_FILE"
+: "${XRAY_REALITY:=google.com}"
 set +a
+export XRAY_REALITY
 
 echo "" > "$VOLUME/$CONFIG_FILE"
 echo "" > "$VOLUME/$LINK_FILE"

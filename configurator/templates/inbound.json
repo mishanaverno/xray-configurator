@@ -29,7 +29,10 @@
 				"maxClientVer": "",
 				"maxTimeDiff": 0,
 				"shortIds": [""]
-			}
+			},
+			"sockopt": {
+       			"acceptProxyProtocol": true
+    		}
 		},
 		"sniffing": {
 			"enabled": true,
