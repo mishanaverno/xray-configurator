@@ -12,10 +12,13 @@ fi
 
 if [[ ! -d "$VOLUME" ]]; then
     say "Initializing $VOLUME dir..."
-    mkdir -p "$VOLUME" && chown -R root:xray "$VOLUME" && chmod 2775 "$VOLUME"
+    mkdir -p "$VOLUME"
 else 
     say "$VOLUME already exists."
 fi
+
+chown -R nginx:nginx "$VOLUME"
+chmod 2775 "$VOLUME"
 
 if [[ -e "$TEMPLATES_DIR" && ! -d "$TEMPLATES_DIR" ]]; then
     say "[ERROR] $TEMPLATES_DIR exists and is not a directory" >&2
@@ -24,10 +27,13 @@ fi
 
 if [[ ! -d "$TEMPLATES_DIR" ]]; then
     say "Initializing $TEMPLATES_DIR dir..."
-    mkdir -p "$TEMPLATES_DIR" && chmod 2777 "$TEMPLATES_DIR"
+    mkdir -p "$TEMPLATES_DIR"
 else 
     say "$TEMPLATES_DIR already exists."
 fi
+
+chown -R nginx:nginx "$TEMPLATES_DIR"
+chmod 2775 "$TEMPLATES_DIR"
 
 /scripts/generate_secrets.sh
 
