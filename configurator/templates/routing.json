@@ -7,6 +7,16 @@
         },
         {
             "type": "field",
+            "domain": [
+                "domain:chatgpt.com",
+                "domain:openai.com",
+                "domain:oaistatic.com",
+                "domain:oaiusercontent.com"
+            ],
+            "outboundTag": "warp"
+        },
+        {
+            "type": "field",
             "domain": ["geosite:openai", "geosite:category-gov-ru", "domain:ru"],
             "outboundTag": "warp"
         },
