@@ -244,6 +244,7 @@ XRAY_SHORT_IDS='[""]'
 - `/restart` - пересобрать config и перезапустить Xray. Используйте после создания/удаления пользователя.
 - `/create_user <username>` - создать пользователя, сгенерировать shortId и добавить его в `XRAY_SHORT_IDS`.
 - `/delete_user <username>` - удалить пользователя и убрать его shortId из `XRAY_SHORT_IDS`.
+- `/users` - показать список пользователей и их shortId.
 - `/link <username>` - получить VLESS-ссылку пользователя с `sid`.
 - `/links <username>` - алиас для `/link`.
 - `/client_routing` - получить клиентские routing-правила.

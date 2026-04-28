@@ -25,6 +25,9 @@ const HELP_MESSAGE = [
     '/delete_user <username>',
     'Удалить пользователя из Redis и убрать его shortId из XRAY_SHORT_IDS.',
     '',
+    '/users',
+    'Показать список пользователей и их shortId.',
+    '',
     '/link <username>',
     'Получить VLESS-ссылку пользователя с подставленным sid.',
     '',
@@ -187,6 +190,24 @@ async function start() {
 
         await redis.hDel(REDIS_USERS_KEY, username);
         await replyTemporary(ctx, `User deleted: ${username}\nid: ${id}\nRun /restart to apply it in Xray.`, 60000);
+    });
+
+    bot.command('users', async ctx => {
+        const users = await redis.hGetAll(REDIS_USERS_KEY);
+        const entries = Object.entries(users).sort(([a], [b]) => a.localeCompare(b));
+
+        if (entries.length === 0) {
+            await replyTemporary(ctx, 'Users list is empty', 10000);
+            return;
+        }
+
+        const message = [
+            'Users:',
+            '',
+            ...entries.map(([username, id]) => `${username}: ${id}`)
+        ].join('\n');
+
+        await replyLongText(ctx, message, 60000);
     });
 
     async function sendUserLink(ctx) {
