@@ -177,6 +177,38 @@ xr-conf --up-bot
 docker logs -f xray-bot
 ```
 
+## Резервный MTProto proxy для Telegram
+
+Если Xray сломан, Telegram может быть недоступен, и ботом не получится управлять. Для аварийного доступа можно поднять отдельный MTProto proxy на порту `8443`:
+
+```bash
+xr-conf --up-mtproto
+```
+
+Получить ссылку для Telegram:
+
+```bash
+xr-conf --mtproto-logs
+```
+
+В логах будет ссылка вида:
+
+```text
+tg://proxy?server=SERVER_IP&port=8443&secret=...
+```
+
+Остановить MTProto proxy:
+
+```bash
+xr-conf --down-mtproto
+```
+
+Если нужен другой порт:
+
+```bash
+MTPROTO_PORT=9443 xr-conf --up-mtproto
+```
+
 ## Создание пользователя
 
 В Telegram:
@@ -282,6 +314,9 @@ xr-conf --start-xray
 xr-conf --stop-xray
 xr-conf --restart-xray
 xr-conf --links
+xr-conf --up-mtproto
+xr-conf --mtproto-logs
+xr-conf --down-mtproto
 xr-conf --list-sni
 xr-conf --add-sni www.microsoft.com
 ```

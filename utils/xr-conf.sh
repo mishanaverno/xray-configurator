@@ -6,8 +6,11 @@ LOCAL="/usr/local/share/xray"
 
 CONF_NAME="xray-conf"
 BOT_NAME="xray-bot"
+MTPROTO_NAME="mtproto-proxy"
 CONF_IMAGE="mishanaverno/xray-conf:latest"
 BOT_IMAGE="mishanaverno/xray-bot:latest"
+MTPROTO_IMAGE="${MTPROTO_IMAGE:-telegrammessenger/proxy:latest}"
+MTPROTO_PORT="${MTPROTO_PORT:-8443}"
 SNI_LIST_NAME="sni_list"
 
 RED="\033[31m"
@@ -101,6 +104,26 @@ down_conf() {
 
 down_bot() {
     docker rm -f $BOT_NAME
+}
+
+up_mtproto() {
+    echo "[xr-conf] Starting MTProto proxy on port $MTPROTO_PORT..."
+    docker pull "$MTPROTO_IMAGE" || echo "[xr-conf] Pull failed; trying local image $MTPROTO_IMAGE"
+    docker rm -f "$MTPROTO_NAME" >/dev/null 2>&1 || true
+    docker run -d \
+    --name "$MTPROTO_NAME" \
+    --restart unless-stopped \
+    -p "$MTPROTO_PORT:443" \
+    "$MTPROTO_IMAGE"
+    echo "[xr-conf] MTProto proxy started. Use --mtproto-logs to get the Telegram proxy link."
+}
+
+down_mtproto() {
+    docker rm -f "$MTPROTO_NAME"
+}
+
+mtproto_logs() {
+    docker logs "$MTPROTO_NAME"
 }
 
 start_xray() {
@@ -232,6 +255,9 @@ Usage: xr-conf []
     --down-conf
     --up-bot
     --down-bot
+    --up-mtproto
+    --down-mtproto
+    --mtproto-logs
     --start-xray
     --stop-xray
     --restart-xray
@@ -255,12 +281,24 @@ while [[ $# -gt 0 ]]; do
             up_bot
             shift
             ;;
+        --up-mtproto)
+            up_mtproto
+            shift
+            ;;
          --down-conf)
             down_conf
             shift
             ;;
         --down-bot)
             down_bot
+            shift
+            ;;
+        --down-mtproto)
+            down_mtproto
+            shift
+            ;;
+        --mtproto-logs)
+            mtproto_logs
             shift
             ;;
         --start-xray)

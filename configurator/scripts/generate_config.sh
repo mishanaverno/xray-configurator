@@ -8,10 +8,14 @@ say "Building config.json from templates in $TEMPLATES_DIR ..."
 set -a
 . "$VOLUME/$SECRETS_FILE"
 [ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ] && . "$TEMPLATES_DIR/$VARIABLES_FILE"
+: "${XRAY_UUID:?XRAY_UUID is not set}"
+: "${XRAY_PRIVATE_KEY:?XRAY_PRIVATE_KEY is not set}"
+: "${XRAY_PUBLIC_KEY:?XRAY_PUBLIC_KEY is not set}"
+: "${XRAY_HOST_IP:?XRAY_HOST_IP is not set}"
 : "${XRAY_REALITY:=google.com}"
 : "${XRAY_SHORT_IDS:='[""]'}"
 set +a
-export XRAY_REALITY XRAY_SHORT_IDS
+export XRAY_UUID XRAY_PRIVATE_KEY XRAY_PUBLIC_KEY XRAY_HOST_IP XRAY_REALITY XRAY_SHORT_IDS
 
 for f in "$INBOUND_FILE" "$OUTBOUND_FILE" "$ROUTING_FILE" "$LINK_FILE"; do
   [[ -f "$TEMPLATES_DIR/$f" ]] || { say "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }
