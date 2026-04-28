@@ -140,6 +140,7 @@ links() {
 set_sni() {
     local reality="${1:-}"
     local vars_file="$LOCAL/conf/templates/variables.env"
+    local response
 
     if [[ -z "$reality" ]]; then
         reality=$(read_nonempty "Enter XRAY_REALITY value: ")
@@ -147,19 +148,34 @@ set_sni() {
 
     validate_reality_hostname "$reality"
 
+    if response="$(curl -fsS --max-time 4 "http://127.0.0.1:8080/sni/set?sni=$reality" 2>/dev/null)"; then
+        printf '%s\n' "$response"
+        return
+    fi
+
+    echo "[xr-conf] configurator API is unavailable; updating local template file"
     mkdir -p "$(dirname "$vars_file")"
 
     if [[ ! -f "$vars_file" ]]; then
         cat > "$vars_file" <<EOF
 XRAY_LOG_LEVEL=warning
 XRAY_REALITY=$reality
+XRAY_SHORT_IDS='[""]'
 LINK1_TAG=VLESS_CONF
 EOF
         return
     fi
 
     if grep -q '^XRAY_REALITY=' "$vars_file"; then
-        sed -i "s/^XRAY_REALITY=.*/XRAY_REALITY=$reality/" "$vars_file"
+        tmp="$(mktemp "$vars_file.XXXXXX")"
+        awk -v value="XRAY_REALITY=$reality" '
+            /^XRAY_REALITY=/ {
+                print value
+                next
+            }
+            { print }
+        ' "$vars_file" > "$tmp"
+        mv -f "$tmp" "$vars_file"
     else
         printf '\nXRAY_REALITY=%s\n' "$reality" >> "$vars_file"
     fi
