@@ -34,6 +34,27 @@ set_reality() {
   fi
 }
 
+remove_sni_candidate() {
+  local host="$1"
+  local tmp
+
+  [[ -f "$SNI_LIST_PATH" ]] || return 0
+
+  tmp="$(mktemp "$SNI_LIST_PATH.XXXXXX")"
+  awk -v host="$host" '
+    {
+      line = $0
+      sub(/#.*/, "", line)
+      gsub(/[[:space:]]/, "", line)
+      if (tolower(line) == host) {
+        next
+      }
+      print
+    }
+  ' "$SNI_LIST_PATH" > "$tmp"
+  mv -f "$tmp" "$SNI_LIST_PATH"
+}
+
 current_reality() {
   if [[ -f "$VARIABLES_PATH" ]]; then
     awk -F= '$1 == "XRAY_REALITY" {print $2; exit}' "$VARIABLES_PATH"
@@ -78,6 +99,7 @@ while IFS= read -r candidate; do
 
   if tls_ok "$candidate"; then
     set_reality "$candidate"
+    remove_sni_candidate "$candidate"
     say "XRAY_REALITY replaced with healthy SNI: $candidate"
     exit 0
   fi

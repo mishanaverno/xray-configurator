@@ -9,8 +9,10 @@ source /scripts/sni_lib.sh
 
 : "${TEMPLATES_DIR:?TEMPLATES_DIR is not set}"
 : "${VARIABLES_FILE:?VARIABLES_FILE is not set}"
+: "${SNI_LIST_FILE:?SNI_LIST_FILE is not set}"
 
 VARIABLES_PATH="$TEMPLATES_DIR/$VARIABLES_FILE"
+SNI_LIST_PATH="$TEMPLATES_DIR/$SNI_LIST_FILE"
 
 fail() {
   http_error
@@ -68,6 +70,24 @@ fi
 
 mv -f "$tmp" "$VARIABLES_PATH"
 chmod 666 "$VARIABLES_PATH"
+
+if [[ -f "$SNI_LIST_PATH" ]]; then
+  sni_tmp="$(mktemp "$SNI_LIST_PATH.XXXXXX")"
+  trap 'rm -f "$tmp" "$sni_tmp"' EXIT
+  awk -v reality="$reality" '
+    {
+      line = $0
+      sub(/#.*/, "", line)
+      gsub(/[[:space:]]/, "", line)
+      if (tolower(line) == reality) {
+        next
+      }
+      print
+    }
+  ' "$SNI_LIST_PATH" > "$sni_tmp"
+  mv -f "$sni_tmp" "$SNI_LIST_PATH"
+  chmod 666 "$SNI_LIST_PATH"
+fi
 
 http_ok
 say "XRAY_REALITY set to: $reality"
