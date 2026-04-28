@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "commonjs",
   "dependencies": {
+    "redis": "^4.7.1",
     "telegraf": "^4.16.0"
   }
 }

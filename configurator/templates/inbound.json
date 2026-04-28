@@ -28,7 +28,7 @@
 				"minClientVer": "",
 				"maxClientVer": "",
 				"maxTimeDiff": 0,
-				"shortIds": [""]
+				"shortIds": ${XRAY_SHORT_IDS}
 			},
 			"sockopt": {
        			"acceptProxyProtocol": true

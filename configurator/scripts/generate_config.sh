@@ -9,8 +9,9 @@ set -a
 . "$VOLUME/$SECRETS_FILE"
 [ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ] && . "$TEMPLATES_DIR/$VARIABLES_FILE"
 : "${XRAY_REALITY:=google.com}"
+: "${XRAY_SHORT_IDS:='[""]'}"
 set +a
-export XRAY_REALITY
+export XRAY_REALITY XRAY_SHORT_IDS
 
 for f in "$INBOUND_FILE" "$OUTBOUND_FILE" "$ROUTING_FILE" "$LINK_FILE"; do
   [[ -f "$TEMPLATES_DIR/$f" ]] || { say "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }

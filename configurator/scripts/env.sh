@@ -15,4 +15,5 @@ export ROUTING_FILE=routing.json
 export CLIENT_ROUTING_FILE=client_routing.json
 export LINK_FILE=link.txt
 export SNI_LIST_FILE=sni_list
+export SHORT_ID_PARAM=short_id
 export BOT_ENV=bot.env
