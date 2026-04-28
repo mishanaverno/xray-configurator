@@ -3,6 +3,22 @@ const { promisify } = require("util");
 const { Telegraf } = require("telegraf");
 const { fetchConfig } = require("./fetch-conf.js");
 
+const TELEGRAM_MESSAGE_LIMIT = 4096;
+
+async function replyLongText(ctx, text, ttlMs) {
+    const messages = [];
+    for (let offset = 0; offset < text.length; offset += TELEGRAM_MESSAGE_LIMIT) {
+        messages.push(await ctx.reply(text.slice(offset, offset + TELEGRAM_MESSAGE_LIMIT)));
+    }
+
+    setTimeout(() => {
+        for (const msg of messages) {
+            ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
+                .catch(() => {});
+        }
+    }, ttlMs);
+}
+
 async function start() {
     const BOT_TOKEN = process.env.BOT_TOKEN;
     const CHAT_ID = parseInt(process.env.CHAT_ID, 10);
@@ -42,6 +58,12 @@ async function start() {
         ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
             .catch(() => {});
         }, 60000);
+    });
+
+    bot.command('client_routing', async ctx => {
+        const { ok, body } = await fetchConfig('/client-routing');
+        const message = ok ? body : `🔴 Failed to fetch client routing:\n${body}`;
+        await replyLongText(ctx, message, 60000);
     });
 
     bot.command('sni_list', async ctx => {

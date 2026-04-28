@@ -1,0 +1,72 @@
+[
+  {
+    "domain": [
+      "geosite:ru-blocked",
+      "geosite:google",
+      "geosite:youtube",
+      "geosite:telegram",
+      "geosite:meta",
+      "geosite:twitter",
+      "geosite:discord",
+      "geosite:openai",
+      "domain:chatgpt.com",
+      "domain:oaistatic.com",
+      "domain:oaiusercontent.com",
+      "domain:chess.com"
+    ],
+    "enabled": true,
+    "locked": false,
+    "network": "tcp,udp",
+    "outboundTag": "proxy",
+    "remarks": "Заблокированные и проблемные домены РФ через proxy"
+  },
+  {
+    "ip": [
+      "geoip:ru-blocked",
+      "geoip:ru-blocked-community",
+      "geoip:telegram",
+      "geoip:google",
+      "geoip:facebook",
+      "geoip:twitter",
+      "5.28.195.2"
+    ],
+    "enabled": true,
+    "locked": false,
+    "network": "tcp,udp",
+    "outboundTag": "proxy",
+    "remarks": "Заблокированные и проблемные IP через proxy"
+  },
+  {
+    "enabled": true,
+    "locked": false,
+    "ip": [
+      "geoip:private"
+    ],
+    "outboundTag": "direct",
+    "remarks": "Локальные IP напрямую"
+  },
+  {
+    "domain": [
+      "geosite:private"
+    ],
+    "enabled": true,
+    "locked": false,
+    "outboundTag": "direct",
+    "remarks": "Локальные домены напрямую"
+  },
+  {
+    "enabled": true,
+    "locked": false,
+    "network": "udp",
+    "outboundTag": "block",
+    "port": "443",
+    "remarks": "Блокировать QUIC / UDP 443"
+  },
+  {
+    "enabled": true,
+    "locked": false,
+    "outboundTag": "direct",
+    "port": "0-65535",
+    "remarks": "Все остальное напрямую"
+  }
+]

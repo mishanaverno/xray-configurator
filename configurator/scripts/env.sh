@@ -12,6 +12,7 @@ export SECRETS_FILE=secrets.env
 export INBOUND_FILE=inbound.json
 export OUTBOUND_FILE=outbound.json
 export ROUTING_FILE=routing.json
+export CLIENT_ROUTING_FILE=client_routing.json
 export LINK_FILE=link.txt
 export SNI_LIST_FILE=sni_list
 export BOT_ENV=bot.env
