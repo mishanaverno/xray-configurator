@@ -10,7 +10,7 @@ MTPROTO_NAME="mtproto-proxy"
 CONF_IMAGE="mishanaverno/xray-conf:latest"
 BOT_IMAGE="mishanaverno/xray-bot:latest"
 MTPROTO_IMAGE="${MTPROTO_IMAGE:-telegrammessenger/proxy:latest}"
-MTPROTO_PORT="${MTPROTO_PORT:-8443}"
+MTPROTO_PORT="${MTPROTO_PORT:-9443}"
 SNI_LIST_NAME="sni_list"
 
 RED="\033[31m"
@@ -108,6 +108,11 @@ down_bot() {
 
 up_mtproto() {
     echo "[xr-conf] Starting MTProto proxy on port $MTPROTO_PORT..."
+    if command -v ss >/dev/null 2>&1 && ss -ltn "( sport = :$MTPROTO_PORT )" | grep -q ":$MTPROTO_PORT"; then
+        echo "[xr-conf] ERROR: port $MTPROTO_PORT is already in use." >&2
+        echo "[xr-conf] Try another port: MTPROTO_PORT=9443 xr-conf --up-mtproto" >&2
+        return 1
+    fi
     docker pull "$MTPROTO_IMAGE" || echo "[xr-conf] Pull failed; trying local image $MTPROTO_IMAGE"
     docker rm -f "$MTPROTO_NAME" >/dev/null 2>&1 || true
     docker run -d \
