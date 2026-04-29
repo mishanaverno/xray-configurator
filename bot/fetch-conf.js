@@ -1,5 +1,5 @@
 
-const DEFAULT_TIMEOUT_MS = 4000;
+const DEFAULT_TIMEOUT_MS = parseInt(process.env.XRAY_API_TIMEOUT_MS || "20000", 10);
 
 async function fetchConfig(path, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const baseUrl = process.env.XRAY_API_BASE || "http://127.0.0.1:8080";
