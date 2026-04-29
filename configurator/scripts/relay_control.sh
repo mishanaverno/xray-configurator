@@ -49,6 +49,7 @@ relay_host="${XHTTP_RELAY_SSH_HOST:-${XHTTP_RELAY_HOST:-}}"
 relay_user="${XHTTP_RELAY_SSH_USER:-root}"
 relay_port="${XHTTP_RELAY_SSH_PORT:-22}"
 relay_key="${XHTTP_RELAY_SSH_KEY_FILE:-$RELAY_SSH_KEY_FILE}"
+relay_known_hosts="${XHTTP_RELAY_SSH_KNOWN_HOSTS_FILE:-$VOLUME/relay_known_hosts}"
 
 [[ -n "$relay_host" ]] || fail "XHTTP_RELAY_SSH_HOST or XHTTP_RELAY_HOST is not set"
 [[ -f "$relay_key" ]] || fail "Relay SSH key is missing: $relay_key"
@@ -62,6 +63,7 @@ if ! ssh \
   -p "$relay_port" \
   -o BatchMode=yes \
   -o StrictHostKeyChecking=accept-new \
+  -o UserKnownHostsFile="$relay_known_hosts" \
   -o ConnectTimeout=8 \
   "$relay_user@$relay_host" \
   "$remote_cmd" >"$LOG_FILE" 2>&1; then

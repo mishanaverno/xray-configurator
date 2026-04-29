@@ -39,6 +39,9 @@ chmod 2775 "$TEMPLATES_DIR"
 
 /scripts/generate_templates.sh
 
+chown -R nginx:nginx "$TEMPLATES_DIR"
+chmod 2775 "$TEMPLATES_DIR"
+
 NGINX_PRESET="$XRAY_PRESET"
 if [[ "$XRAY_PRESET" == reality* ]]; then
     NGINX_PRESET="reality"
@@ -50,8 +53,18 @@ if [[ ! -f "$NGINX_CONFIG" ]]; then
     exit 1
 fi
 
+if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
+    set -a
+    . "$TEMPLATES_DIR/$VARIABLES_FILE"
+    set +a
+fi
+
+: "${XHTTP_PUBLIC_PORT:=443}"
+: "${XHTTP_PORT:=8443}"
+export XHTTP_PUBLIC_PORT XHTTP_PORT
+
 say "Using nginx config: $NGINX_PRESET"
-cp "$NGINX_CONFIG" /etc/nginx/nginx.conf
+envsubst '${XHTTP_PUBLIC_PORT} ${XHTTP_PORT}' < "$NGINX_CONFIG" > /etc/nginx/nginx.conf
 
 if ! /scripts/update_geodat.sh --plain; then
     say "[WARN] geodat update failed; keeping existing geo files"

@@ -36,6 +36,7 @@ ensure_dir() {
 ensure_local_dirs() {
     ensure_dir "$LOCAL"
     ensure_dir "$LOCAL/conf"
+    ensure_dir "$LOCAL/conf/certs"
     ensure_dir "$LOCAL/bot"
     ensure_dir "$LOCAL/bot-data"
 }
@@ -222,6 +223,90 @@ relay_restart() {
     curl -s http://127.0.0.1:8080/relay/restart
 }
 
+validate_port() {
+    local port="$1"
+
+    if [[ ! "$port" =~ ^[0-9]+$ || "$port" -lt 1 || "$port" -gt 65535 ]]; then
+        echo "[xr-conf] ERROR: invalid port: $port" >&2
+        exit 1
+    fi
+}
+
+set_env_var() {
+    local file="$1"
+    local key="$2"
+    local value="$3"
+    local tmp
+
+    mkdir -p "$(dirname "$file")"
+    touch "$file"
+
+    if grep -q "^$key=" "$file"; then
+        tmp="$(mktemp "$file.XXXXXX")"
+        awk -v key="$key" -v value="$key=$value" '
+            $0 ~ "^" key "=" {
+                print value
+                next
+            }
+            { print }
+        ' "$file" > "$tmp"
+        mv -f "$tmp" "$file"
+    else
+        printf '%s=%s\n' "$key" "$value" >> "$file"
+    fi
+}
+
+set_relay_ssh() {
+    local host="${1:-}"
+    local user="${2:-root}"
+    local port="${3:-22}"
+    local vars_file="$LOCAL/conf/templates/variables.env"
+
+    if [[ -z "$host" ]]; then
+        host=$(read_nonempty "Enter XHTTP_RELAY_SSH_HOST value: ")
+    fi
+
+    validate_reality_hostname "$host"
+    validate_port "$port"
+
+    set_env_var "$vars_file" "XHTTP_RELAY_SSH_HOST" "$host"
+    set_env_var "$vars_file" "XHTTP_RELAY_SSH_USER" "$user"
+    set_env_var "$vars_file" "XHTTP_RELAY_SSH_PORT" "$port"
+
+    echo "[xr-conf] Relay SSH config updated in $vars_file"
+    echo "[xr-conf] XHTTP_RELAY_SSH_HOST=$host"
+    echo "[xr-conf] XHTTP_RELAY_SSH_USER=$user"
+    echo "[xr-conf] XHTTP_RELAY_SSH_PORT=$port"
+}
+
+set_xhttp_relay_public_port() {
+    local port="${1:-}"
+    local vars_file="$LOCAL/conf/templates/variables.env"
+
+    if [[ -z "$port" ]]; then
+        port=$(read_nonempty "Enter XHTTP_PUBLIC_PORT value: ")
+    fi
+
+    validate_port "$port"
+    set_env_var "$vars_file" "XHTTP_PUBLIC_PORT" "$port"
+
+    echo "[xr-conf] XHTTP_PUBLIC_PORT=$port updated in $vars_file"
+}
+
+set_reality_relay_port() {
+    local port="${1:-}"
+    local vars_file="$LOCAL/conf/templates/variables.env"
+
+    if [[ -z "$port" ]]; then
+        port=$(read_nonempty "Enter XHTTP_RELAY_PORT value: ")
+    fi
+
+    validate_port "$port"
+    set_env_var "$vars_file" "XHTTP_RELAY_PORT" "$port"
+
+    echo "[xr-conf] XHTTP_RELAY_PORT=$port updated in $vars_file"
+}
+
 set_sni() {
     local reality="${1:-}"
     local vars_file="$LOCAL/conf/templates/variables.env"
@@ -331,6 +416,9 @@ Usage: xr-conf []
     --relay-start
     --relay-stop
     --relay-restart
+    --set-relay-ssh [host] [user] [port]
+    --set-xhttp-public-port [port]
+    --set-reality-relay-port [port]
     --set-sni [hostname]
     --add-sni [hostname]
     --list-sni
@@ -421,6 +509,36 @@ while [[ $# -gt 0 ]]; do
         --relay-restart)
             relay_restart
             shift
+            ;;
+        --set-relay-ssh)
+            if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
+                set_relay_ssh
+                shift
+            else
+                set_relay_ssh "${2:-}" "${3:-root}" "${4:-22}"
+                shift
+                [[ $# -gt 0 ]] && shift
+                [[ $# -gt 0 ]] && shift
+                [[ $# -gt 0 ]] && shift
+            fi
+            ;;
+        --set-xhttp-public-port)
+            if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
+                set_xhttp_relay_public_port
+                shift
+            else
+                set_xhttp_relay_public_port "${2:-}"
+                shift 2
+            fi
+            ;;
+        --set-reality-relay-port)
+            if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
+                set_reality_relay_port
+                shift
+            else
+                set_reality_relay_port "${2:-}"
+                shift 2
+            fi
             ;;
         --set-sni)
             if [[ "${2:-}" == --* ]]; then

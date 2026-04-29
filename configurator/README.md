@@ -9,7 +9,7 @@ Configurator-контейнер собирает и запускает Xray-ко
 - Локальный HTTP API на `127.0.0.1:8080`.
 
 Для `reality` и `reality_xhttp_relay` nginx включает proxy protocol, потому что Reality inbound принимает его через `sockopt.acceptProxyProtocol`.
-Для `xhttp_relay` nginx прокидывает `443 -> 127.0.0.1:8443` без proxy protocol, потому что xHTTP inbound принимает обычный TLS-поток.
+Для `xhttp_relay` nginx прокидывает `XHTTP_PUBLIC_PORT -> 127.0.0.1:XHTTP_PORT` без proxy protocol, потому что xHTTP inbound принимает обычный TLS-поток.
 
 Preset `reality_xhttp_relay` также может управлять relay через SSH. Для этого используются локальные endpoints:
 

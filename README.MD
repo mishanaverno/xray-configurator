@@ -13,7 +13,8 @@
 На сервере нужны:
 
 - Docker;
-- открытый TCP порт `443`;
+- открытый TCP порт `443` для `reality` / `reality_xhttp_relay`;
+- открытый TCP порт `XHTTP_PUBLIC_PORT` для `xhttp_relay`, по умолчанию `443`;
 - Telegram bot token;
 - Telegram chat id, из которого разрешено управлять ботом.
 
@@ -204,6 +205,7 @@ XHTTP_RELAY_SSH_PORT=22
 ```
 
 `XHTTP_RELAY_UUID` должен совпадать с `XHTTP_UUID` на relay-сервере.
+`XHTTP_RELAY_PORT` должен совпадать с публичным `XHTTP_PUBLIC_PORT` на relay-сервере.
 Routing в этом preset оставляет ChatGPT/OpenAI в outbound `warp`, а `domain:ru`, `geosite:category-gov-ru` и `geoip:ru` отправляет в outbound `xhttp_relay`.
 
 Для управления relay через бота основной сервер использует отдельный SSH key:
@@ -211,6 +213,12 @@ Routing в этом preset оставляет ChatGPT/OpenAI в outbound `warp`,
 ```bash
 xr-conf --relay-keygen
 xr-conf --relay-pubkey
+```
+
+SSH-подключение к relay можно записать в `variables.env` командой:
+
+```bash
+xr-conf --set-relay-ssh relay.example.com root 22
 ```
 
 Добавьте public key на relay-сервер в `~/.ssh/authorized_keys` пользователя `XHTTP_RELAY_SSH_USER`.
@@ -260,6 +268,7 @@ xr-conf --up-conf xhttp_relay
 
 ```env
 XHTTP_HOST=relay.example.com
+XHTTP_PUBLIC_PORT=443
 XHTTP_PORT=8443
 XHTTP_PATH=/xhttp-relay
 XHTTP_UUID=...
@@ -274,8 +283,18 @@ docker exec xray-conf xray uuid
 ```
 
 TLS-сертификат должен быть доступен внутри контейнера relay-сервера по путям из `XHTTP_TLS_CERT_FILE` и `XHTTP_TLS_KEY_FILE`.
-На relay-сервере снаружи должен быть открыт порт `443`. Nginx preset `xhttp_relay` принимает TLS на `443` и прокидывает поток в локальный Xray inbound `127.0.0.1:XHTTP_PORT`, по умолчанию `8443`, без proxy protocol.
+На relay-сервере снаружи должен быть открыт порт `XHTTP_PUBLIC_PORT`. Nginx preset `xhttp_relay` принимает TLS на этом порту и прокидывает поток в локальный Xray inbound `127.0.0.1:XHTTP_PORT`, по умолчанию `8443`, без proxy protocol.
 Если Xray при старте ругается на `network: xhttp`, обновите образ Xray/configurator до версии с поддержкой xHTTP.
+
+Поменять внешний порт relay можно так:
+
+```bash
+# на relay-сервере
+xr-conf --set-xhttp-public-port 9443
+
+# на основном reality_xhttp_relay сервере
+xr-conf --set-reality-relay-port 9443
+```
 
 Применить изменения:
 
@@ -454,6 +473,9 @@ xr-conf --restart-xray
 xr-conf --links
 xr-conf --relay-keygen
 xr-conf --relay-pubkey
+xr-conf --set-relay-ssh relay.example.com root 22
+xr-conf --set-xhttp-public-port 9443
+xr-conf --set-reality-relay-port 9443
 xr-conf --relay-health
 xr-conf --relay-start
 xr-conf --relay-stop
@@ -486,4 +508,4 @@ docker exec -it xray-bot redis-cli HGETALL xray:users
 - После изменения пользователей, SNI или templates нужен restart Xray.
 - `XRAY_SHORT_IDS='[""]'` разрешает подключение без `sid`; после создания пользователей лучше использовать ссылки с персональным `sid`.
 - Configurator API рассчитан на локальный доступ. Не публикуйте порт `8080` наружу.
-- Для работы на `443` контейнер configurator должен иметь право слушать этот порт.
+- Контейнер configurator должен иметь право слушать внешний proxy-порт: `443` для Reality preset'ов или `XHTTP_PUBLIC_PORT` для `xhttp_relay`.
