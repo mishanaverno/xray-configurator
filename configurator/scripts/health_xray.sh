@@ -27,7 +27,11 @@ if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
   set +a
 fi
 
-XRAY_PORT="${XHTTP_PORT:-8443}"
+if [[ "$XRAY_PRESET" == "xhttp_relay" ]]; then
+  XRAY_PORT=1050
+else
+  XRAY_PORT=8443
+fi
 
 # PID file exists?
 if [[ ! -f "$XRAY_PID_FILE" ]]; then

@@ -66,22 +66,38 @@ validate_reality_hostname() {
 
 up_conf() {
     local preset="${1:-reality}"
+    local xhttp_public_port="${2:-443}"
 
     if [[ ! "$preset" =~ ^[A-Za-z0-9_-]+$ ]]; then
         echo "[xr-conf] ERROR: invalid preset: $preset" >&2
         exit 1
     fi
 
+    if [[ "$preset" == "xhttp_relay" ]]; then
+        validate_port "$xhttp_public_port"
+    fi
+
     ensure_local_dirs
     echo "[xr-conf] Starting the conteiner with xray preset: $preset"
     docker pull $CONF_IMAGE
-    docker run -d \
-    --name $CONF_NAME \
-    --network host \
-    --restart unless-stopped \
-    -e XRAY_PRESET="$preset" \
-    -v $LOCAL/conf:/usr/share/xray/ \
-    $CONF_IMAGE
+    if [[ "$preset" == "xhttp_relay" ]]; then
+        docker run -d \
+        --name $CONF_NAME \
+        --network host \
+        --restart unless-stopped \
+        -e XRAY_PRESET="$preset" \
+        -e XHTTP_PUBLIC_PORT="$xhttp_public_port" \
+        -v $LOCAL/conf:/usr/share/xray/ \
+        $CONF_IMAGE
+    else
+        docker run -d \
+        --name $CONF_NAME \
+        --network host \
+        --restart unless-stopped \
+        -e XRAY_PRESET="$preset" \
+        -v $LOCAL/conf:/usr/share/xray/ \
+        $CONF_IMAGE
+    fi
 }
 
 up_bot() {
@@ -279,20 +295,6 @@ set_relay_ssh() {
     echo "[xr-conf] XHTTP_RELAY_SSH_PORT=$port"
 }
 
-set_xhttp_relay_public_port() {
-    local port="${1:-}"
-    local vars_file="$LOCAL/conf/templates/variables.env"
-
-    if [[ -z "$port" ]]; then
-        port=$(read_nonempty "Enter XHTTP_PUBLIC_PORT value: ")
-    fi
-
-    validate_port "$port"
-    set_env_var "$vars_file" "XHTTP_PUBLIC_PORT" "$port"
-
-    echo "[xr-conf] XHTTP_PUBLIC_PORT=$port updated in $vars_file"
-}
-
 set_reality_relay_port() {
     local port="${1:-}"
     local vars_file="$LOCAL/conf/templates/variables.env"
@@ -398,7 +400,7 @@ list_sni_candidates() {
 if [ $# -eq 0 ]; then
     cat <<'EOF'
 Usage: xr-conf []
-    --up-conf [reality|reality_xhttp_relay|xhttp_relay]
+    --up-conf [reality|reality_xhttp_relay|xhttp_relay] [xhttp_public_port]
     --down-conf
     --up-bot
     --down-bot
@@ -417,7 +419,6 @@ Usage: xr-conf []
     --relay-stop
     --relay-restart
     --set-relay-ssh [host] [user] [port]
-    --set-xhttp-public-port [port]
     --set-reality-relay-port [port]
     --set-sni [hostname]
     --add-sni [hostname]
@@ -434,8 +435,14 @@ while [[ $# -gt 0 ]]; do
                 up_conf
                 shift
             else
-                up_conf "$2"
+                preset="$2"
                 shift 2
+                if [[ "$preset" == "xhttp_relay" && -n "${1:-}" && "${1:-}" != --* ]]; then
+                    up_conf "$preset" "$1"
+                    shift
+                else
+                    up_conf "$preset"
+                fi
             fi
             ;;
         --up-bot)
@@ -511,24 +518,24 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --set-relay-ssh)
-            if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
+            if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
                 set_relay_ssh
                 shift
             else
-                set_relay_ssh "${2:-}" "${3:-root}" "${4:-22}"
                 shift
-                [[ $# -gt 0 ]] && shift
-                [[ $# -gt 0 ]] && shift
-                [[ $# -gt 0 ]] && shift
-            fi
-            ;;
-        --set-xhttp-public-port)
-            if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
-                set_xhttp_relay_public_port
+                relay_host="${1:-}"
+                relay_user="root"
+                relay_port="22"
                 shift
-            else
-                set_xhttp_relay_public_port "${2:-}"
-                shift 2
+                if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
+                    relay_user="$1"
+                    shift
+                fi
+                if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
+                    relay_port="$1"
+                    shift
+                fi
+                set_relay_ssh "$relay_host" "$relay_user" "$relay_port"
             fi
             ;;
         --set-reality-relay-port)

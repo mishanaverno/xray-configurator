@@ -1,7 +1,7 @@
 [
   {
     "listen": "127.0.0.1",
-    "port": ${XHTTP_PORT},
+    "port": 1050,
     "protocol": "vless",
     "tag": "xhttp-in",
     "settings": {

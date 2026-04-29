@@ -53,18 +53,22 @@ if [[ ! -f "$NGINX_CONFIG" ]]; then
     exit 1
 fi
 
+xhttp_public_port_from_env="${XHTTP_PUBLIC_PORT:-}"
 if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
     set -a
     . "$TEMPLATES_DIR/$VARIABLES_FILE"
     set +a
 fi
 
-: "${XHTTP_PUBLIC_PORT:=443}"
-: "${XHTTP_PORT:=8443}"
-export XHTTP_PUBLIC_PORT XHTTP_PORT
+if [[ -n "$xhttp_public_port_from_env" ]]; then
+    XHTTP_PUBLIC_PORT="$xhttp_public_port_from_env"
+else
+    : "${XHTTP_PUBLIC_PORT:=443}"
+fi
+export XHTTP_PUBLIC_PORT
 
 say "Using nginx config: $NGINX_PRESET"
-envsubst '${XHTTP_PUBLIC_PORT} ${XHTTP_PORT}' < "$NGINX_CONFIG" > /etc/nginx/nginx.conf
+envsubst '${XHTTP_PUBLIC_PORT}' < "$NGINX_CONFIG" > /etc/nginx/nginx.conf
 
 if ! /scripts/update_geodat.sh --plain; then
     say "[WARN] geodat update failed; keeping existing geo files"
