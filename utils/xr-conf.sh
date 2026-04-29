@@ -12,6 +12,7 @@ BOT_IMAGE="mishanaverno/xray-bot:latest"
 MTPROTO_IMAGE="${MTPROTO_IMAGE:-telegrammessenger/proxy:latest}"
 MTPROTO_PORT="${MTPROTO_PORT:-9443}"
 SNI_LIST_NAME="sni_list"
+RELAY_SSH_KEY_NAME="relay_control_ed25519"
 
 RED="\033[31m"
 GREEN="\033[32m"
@@ -63,13 +64,21 @@ validate_reality_hostname() {
 }
 
 up_conf() {
+    local preset="${1:-reality}"
+
+    if [[ ! "$preset" =~ ^[A-Za-z0-9_-]+$ ]]; then
+        echo "[xr-conf] ERROR: invalid preset: $preset" >&2
+        exit 1
+    fi
+
     ensure_local_dirs
-    echo "[xr-conf] Starting the conteiner with xray..."
+    echo "[xr-conf] Starting the conteiner with xray preset: $preset"
     docker pull $CONF_IMAGE
     docker run -d \
     --name $CONF_NAME \
     --network host \
     --restart unless-stopped \
+    -e XRAY_PRESET="$preset" \
     -v $LOCAL/conf:/usr/share/xray/ \
     $CONF_IMAGE
 }
@@ -165,6 +174,54 @@ links() {
     curl -s http://127.0.0.1:8080/links
 }
 
+relay_ssh_key_path() {
+    printf '%s/conf/%s\n' "$LOCAL" "$RELAY_SSH_KEY_NAME"
+}
+
+relay_keygen() {
+    local key_path
+    key_path="$(relay_ssh_key_path)"
+
+    ensure_local_dirs
+    if [[ -f "$key_path" ]]; then
+        echo "[xr-conf] Relay SSH key already exists: $key_path"
+        return
+    fi
+
+    ssh-keygen -t ed25519 -f "$key_path" -N "" -C "xray-relay-control"
+    chmod 600 "$key_path"
+    chmod 644 "$key_path.pub"
+    echo "[xr-conf] Relay SSH key generated: $key_path"
+}
+
+relay_pubkey() {
+    local key_path
+    key_path="$(relay_ssh_key_path)"
+
+    if [[ ! -f "$key_path.pub" ]]; then
+        echo "[xr-conf] ERROR: relay public key not found. Run: xr-conf --relay-keygen" >&2
+        exit 1
+    fi
+
+    cat "$key_path.pub"
+}
+
+relay_health() {
+    curl -s http://127.0.0.1:8080/relay/health
+}
+
+relay_start() {
+    curl -s http://127.0.0.1:8080/relay/start
+}
+
+relay_stop() {
+    curl -s http://127.0.0.1:8080/relay/stop
+}
+
+relay_restart() {
+    curl -s http://127.0.0.1:8080/relay/restart
+}
+
 set_sni() {
     local reality="${1:-}"
     local vars_file="$LOCAL/conf/templates/variables.env"
@@ -256,7 +313,7 @@ list_sni_candidates() {
 if [ $# -eq 0 ]; then
     cat <<'EOF'
 Usage: xr-conf []
-    --up-conf
+    --up-conf [reality|reality_xhttp_relay|xhttp_relay]
     --down-conf
     --up-bot
     --down-bot
@@ -268,6 +325,12 @@ Usage: xr-conf []
     --restart-xray
     --health-xray
     --links
+    --relay-keygen
+    --relay-pubkey
+    --relay-health
+    --relay-start
+    --relay-stop
+    --relay-restart
     --set-sni [hostname]
     --add-sni [hostname]
     --list-sni
@@ -279,8 +342,13 @@ fi
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --up-conf)
-            up_conf
-            shift
+            if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
+                up_conf
+                shift
+            else
+                up_conf "$2"
+                shift 2
+            fi
             ;;
         --up-bot)
             up_bot
@@ -328,6 +396,30 @@ while [[ $# -gt 0 ]]; do
             ;;
         --links)
             links
+            shift
+            ;;
+        --relay-keygen)
+            relay_keygen
+            shift
+            ;;
+        --relay-pubkey)
+            relay_pubkey
+            shift
+            ;;
+        --relay-health)
+            relay_health
+            shift
+            ;;
+        --relay-start)
+            relay_start
+            shift
+            ;;
+        --relay-stop)
+            relay_stop
+            shift
+            ;;
+        --relay-restart)
+            relay_restart
             shift
             ;;
         --set-sni)

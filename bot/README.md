@@ -10,6 +10,7 @@ Telegram-бот для управления локальным Xray configurator
 - Создание и удаление пользователей с персональными shortId.
 - Управление SNI-кандидатами.
 - Получение client routing JSON для настройки клиента.
+- Управление xHTTP relay через configurator SSH-control endpoints.
 - Автоуведомления в Telegram, если health check упал или восстановился.
 
 ## Переменные окружения
@@ -55,6 +56,9 @@ Redis нужен для команд `/create_user`, `/delete_user`, `/link` и 
 Чтобы пользователи не терялись при пересоздании контейнера, подключайте volume в `/data`.
 
 ## Команды
+
+Ответы команд автоматически удаляются. Дефолтное время жизни сообщения - 1 час.
+На неизвестные slash-команды бот отвечает подсказкой с предложением вызвать `/help`.
 
 ### `/help`
 
@@ -161,6 +165,22 @@ XRAY_SHORT_IDS='[""]'
 ### `/sni_list`
 
 Возвращает текущий список SNI-кандидатов.
+
+### `/relay_health`
+
+Проверяет xHTTP relay через SSH с основного configurator-сервера.
+
+### `/relay_start`
+
+Запускает Xray на xHTTP relay.
+
+### `/relay_stop`
+
+Останавливает Xray на xHTTP relay.
+
+### `/relay_restart`
+
+Перезапускает Xray на xHTTP relay.
 
 ## Запуск
 

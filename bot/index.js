@@ -6,6 +6,7 @@ const { createClient } = require("redis");
 const { fetchConfig } = require("./fetch-conf.js");
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
+const DEFAULT_MESSAGE_TTL_MS = 60 * 60 * 1000;
 const USERNAME_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const HELP_MESSAGE = [
     'Команды управления Xray:',
@@ -41,29 +42,50 @@ const HELP_MESSAGE = [
     'Добавить hostname в список SNI-кандидатов для Reality fallback.',
     '',
     '/sni_list',
-    'Показать текущий список SNI-кандидатов.'
+    'Показать текущий список SNI-кандидатов.',
+    '',
+    '/relay_health',
+    'Проверить xHTTP relay через SSH с основного сервера.',
+    '',
+    '/relay_start',
+    'Запустить Xray на xHTTP relay через SSH.',
+    '',
+    '/relay_stop',
+    'Остановить Xray на xHTTP relay через SSH.',
+    '',
+    '/relay_restart',
+    'Перезапустить Xray на xHTTP relay через SSH.'
 ].join('\n');
 
-async function replyLongText(ctx, text, ttlMs) {
+function deleteTelegramMessages(telegram, messages) {
+    for (const msg of messages) {
+        telegram.deleteMessage(msg.chat.id, msg.message_id)
+            .catch(() => {});
+    }
+}
+
+function scheduleTelegramMessagesDeletion(telegram, messages, ttlMs = DEFAULT_MESSAGE_TTL_MS) {
+    setTimeout(() => deleteTelegramMessages(telegram, messages), ttlMs);
+}
+
+async function replyTemporaryText(ctx, text, ttlMs = DEFAULT_MESSAGE_TTL_MS) {
     const messages = [];
     for (let offset = 0; offset < text.length; offset += TELEGRAM_MESSAGE_LIMIT) {
         messages.push(await ctx.reply(text.slice(offset, offset + TELEGRAM_MESSAGE_LIMIT)));
     }
 
-    setTimeout(() => {
-        for (const msg of messages) {
-            ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
-                .catch(() => {});
-        }
-    }, ttlMs);
+    scheduleTelegramMessagesDeletion(ctx.telegram, messages, ttlMs);
+    return messages;
 }
 
-async function replyTemporary(ctx, text, ttlMs) {
-    const msg = await ctx.reply(text);
-    setTimeout(() => {
-        ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
-            .catch(() => {});
-    }, ttlMs);
+async function sendTemporaryText(telegram, chatId, text, ttlMs = DEFAULT_MESSAGE_TTL_MS) {
+    const messages = [];
+    for (let offset = 0; offset < text.length; offset += TELEGRAM_MESSAGE_LIMIT) {
+        messages.push(await telegram.sendMessage(chatId, text.slice(offset, offset + TELEGRAM_MESSAGE_LIMIT)));
+    }
+
+    scheduleTelegramMessagesDeletion(telegram, messages, ttlMs);
+    return messages;
 }
 
 function parseCommandArg(ctx) {
@@ -132,27 +154,23 @@ async function start() {
     bot.command('health', async ctx => {
         const { ok, body } = await fetchConfig('/health');
         const icon = ok ? '🟢' : '🔴';
-        const msg = await ctx.reply(`${icon} Proxy is ${ok ? 'up' : 'down'} on host ${host}.\n ${body}`);
-        setTimeout(() => {
-        ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
-            .catch(() => {});
-        }, 10000);
+        await replyTemporaryText(ctx, `${icon} Proxy is ${ok ? 'up' : 'down'} on host ${host}.\n ${body}`);
     });
 
     bot.command('help', async ctx => {
-        await replyLongText(ctx, HELP_MESSAGE, 60000);
+        await replyTemporaryText(ctx, HELP_MESSAGE);
     });
 
     bot.command('create_user', async ctx => {
         const username = parseCommandArg(ctx);
         if (!username || !isValidUsername(username)) {
-            await replyTemporary(ctx, 'Usage: /create_user username\nAllowed: latin letters, digits, _ and -', 10000);
+            await replyTemporaryText(ctx, 'Usage: /create_user username\nAllowed: latin letters, digits, _ and -');
             return;
         }
 
         const existingId = await redis.hGet(REDIS_USERS_KEY, username);
         if (existingId) {
-            await replyTemporary(ctx, `User already exists: ${username}\nid: ${existingId}`, 60000);
+            await replyTemporaryText(ctx, `User already exists: ${username}\nid: ${existingId}`);
             return;
         }
 
@@ -162,34 +180,34 @@ async function start() {
         const addShortId = await fetchConfig(`/short-ids/add?short_id=${encodeURIComponent(id)}`);
         if (!addShortId.ok) {
             await redis.hDel(REDIS_USERS_KEY, username);
-            await replyTemporary(ctx, `Failed to register short id for Xray:\n${addShortId.body}`, 10000);
+            await replyTemporaryText(ctx, `Failed to register short id for Xray:\n${addShortId.body}`);
             return;
         }
 
-        await replyTemporary(ctx, `User created: ${username}\nid: ${id}\nRun /restart to apply it in Xray.`, 60000);
+        await replyTemporaryText(ctx, `User created: ${username}\nid: ${id}\nRun /restart to apply it in Xray.`);
     });
 
     bot.command('delete_user', async ctx => {
         const username = parseCommandArg(ctx);
         if (!username || !isValidUsername(username)) {
-            await replyTemporary(ctx, 'Usage: /delete_user username', 10000);
+            await replyTemporaryText(ctx, 'Usage: /delete_user username');
             return;
         }
 
         const id = await redis.hGet(REDIS_USERS_KEY, username);
         if (!id) {
-            await replyTemporary(ctx, `User not found: ${username}`, 10000);
+            await replyTemporaryText(ctx, `User not found: ${username}`);
             return;
         }
 
         const removeShortId = await fetchConfig(`/short-ids/remove?short_id=${encodeURIComponent(id)}`);
         if (!removeShortId.ok) {
-            await replyTemporary(ctx, `Failed to remove short id from Xray:\n${removeShortId.body}`, 10000);
+            await replyTemporaryText(ctx, `Failed to remove short id from Xray:\n${removeShortId.body}`);
             return;
         }
 
         await redis.hDel(REDIS_USERS_KEY, username);
-        await replyTemporary(ctx, `User deleted: ${username}\nid: ${id}\nRun /restart to apply it in Xray.`, 60000);
+        await replyTemporaryText(ctx, `User deleted: ${username}\nid: ${id}\nRun /restart to apply it in Xray.`);
     });
 
     bot.command('users', async ctx => {
@@ -197,7 +215,7 @@ async function start() {
         const entries = Object.entries(users).sort(([a], [b]) => a.localeCompare(b));
 
         if (entries.length === 0) {
-            await replyTemporary(ctx, 'Users list is empty', 10000);
+            await replyTemporaryText(ctx, 'Users list is empty');
             return;
         }
 
@@ -207,25 +225,25 @@ async function start() {
             ...entries.map(([username, id]) => `${username}: ${id}`)
         ].join('\n');
 
-        await replyLongText(ctx, message, 60000);
+        await replyTemporaryText(ctx, message);
     });
 
     async function sendUserLink(ctx) {
         const username = parseCommandArg(ctx);
         if (!username || !isValidUsername(username)) {
-            await replyTemporary(ctx, 'Usage: /link username', 10000);
+            await replyTemporaryText(ctx, 'Usage: /link username');
             return;
         }
 
         const sid = await redis.hGet(REDIS_USERS_KEY, username);
         if (!sid) {
-            await replyTemporary(ctx, `User not found: ${username}`, 10000);
+            await replyTemporaryText(ctx, `User not found: ${username}`);
             return;
         }
 
         const { ok, body } = await fetchConfig('/links');
         const message = ok ? addSidToLinks(body, sid) : `🔴 Failed to fetch link:\n${body}`;
-        await replyLongText(ctx, message, 60000);
+        await replyTemporaryText(ctx, message);
     }
 
     bot.command('link', sendUserLink);
@@ -234,61 +252,67 @@ async function start() {
     bot.command('client_routing', async ctx => {
         const { ok, body } = await fetchConfig('/client-routing');
         const message = ok ? body : `🔴 Failed to fetch client routing:\n${body}`;
-        await replyLongText(ctx, message, 60000);
+        await replyTemporaryText(ctx, message);
     });
 
     bot.command('sni_list', async ctx => {
         const { ok, body } = await fetchConfig('/sni/list');
-        const msg = await ctx.reply(`${ok ? '🟢' : '🔴'} SNI candidates:\n${body || 'empty'}`);
-        setTimeout(() => {
-        ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
-            .catch(() => {});
-        }, 60000);
+        await replyTemporaryText(ctx, `${ok ? '🟢' : '🔴'} SNI candidates:\n${body || 'empty'}`);
     });
 
     bot.command('add_sni', async ctx => {
         const candidate = ctx.message.text.split(/\s+/)[1];
         if (!candidate) {
-            const msg = await ctx.reply('Usage: /add_sni example.com');
-            setTimeout(() => {
-            ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
-                .catch(() => {});
-            }, 10000);
+            await replyTemporaryText(ctx, 'Usage: /add_sni example.com');
             return;
         }
 
         const { ok, body } = await fetchConfig(`/sni/add?sni=${encodeURIComponent(candidate)}`);
-        const msg = await ctx.reply(`${ok ? '🟢' : '🔴'} ${body}`);
-        setTimeout(() => {
-        ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
-            .catch(() => {});
-        }, 10000);
+        await replyTemporaryText(ctx, `${ok ? '🟢' : '🔴'} ${body}`);
     });
 
     bot.command('restart', async ctx => {
         const stop = await fetchConfig('/stop');
         const start = await fetchConfig('/start');
         const message = `${stop.ok && start.ok ? '🟢 Restart success!' : '🔴 Restart fail!'}\n${stop.body}\n${start.body}`;
-        const msg = await ctx.reply(message)
-        setTimeout(() => {
-        ctx.telegram.deleteMessage(msg.chat.id, msg.message_id)
-            .catch(() => {});
-        }, 10000);
+        await replyTemporaryText(ctx, message);
     });
+
+    async function relayCommand(ctx, action) {
+        const { ok, body } = await fetchConfig(`/relay/${action}`);
+        const icon = ok ? '🟢' : '🔴';
+        const message = `${icon} Relay ${action}: ${ok ? 'ok' : 'failed'}\n${body}`;
+        await replyTemporaryText(ctx, message);
+    }
+
+    bot.command('relay_health', async ctx => relayCommand(ctx, 'health'));
+    bot.command('relay_start', async ctx => relayCommand(ctx, 'start'));
+    bot.command('relay_stop', async ctx => relayCommand(ctx, 'stop'));
+    bot.command('relay_restart', async ctx => relayCommand(ctx, 'restart'));
+
+    bot.on('text', async (ctx, next) => {
+        const text = ctx.message?.text || '';
+        if (text.startsWith('/')) {
+            const command = text.split(/\s+/)[0];
+            await replyTemporaryText(ctx, `Unknown command: ${command}\nUse /help to see available commands.`);
+            return;
+        }
+
+        return next();
+    });
+
     let lastState = true
     let lastmsg;
     setInterval(async () => {
         const { ok, body } = await fetchConfig('/health')
         if (lastState && !ok) {
-            lastmsg = await bot.telegram.sendMessage(CHAT_ID, `🔴 Proxy is down on host ${host}.\n ${body}`);
+            lastmsg = await sendTemporaryText(bot.telegram, CHAT_ID, `🔴 Proxy is down on host ${host}.\n ${body}`);
         }
         if (!lastState && ok) {
-            bot.telegram.deleteMessage(lastmsg.chat.id, lastmsg.message_id);
-            const msg = await bot.telegram.sendMessage(CHAT_ID, `🟢 Proxy is recovered on host ${host}.\n ${body}`);
-            setTimeout(() => {
-                bot.telegram.deleteMessage(msg.chat.id, msg.message_id)
-                .catch(() => {});
-            }, 600000);
+            if (lastmsg) {
+                deleteTelegramMessages(bot.telegram, lastmsg);
+            }
+            await sendTemporaryText(bot.telegram, CHAT_ID, `🟢 Proxy is recovered on host ${host}.\n ${body}`);
         }
         lastState = ok
     }, 60000);

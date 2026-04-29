@@ -1,0 +1,45 @@
+[
+  {
+    "listen": "127.0.0.1",
+    "port": ${XHTTP_PORT},
+    "protocol": "vless",
+    "tag": "xhttp-in",
+    "settings": {
+      "clients": [
+        {
+          "id": "${XHTTP_UUID}",
+          "email": "reality-server"
+        }
+      ],
+      "decryption": "none"
+    },
+    "streamSettings": {
+      "network": "xhttp",
+      "security": "tls",
+      "tlsSettings": {
+        "serverName": "${XHTTP_HOST}",
+        "alpn": [
+          "h2"
+        ],
+        "certificates": [
+          {
+            "certificateFile": "${XHTTP_TLS_CERT_FILE}",
+            "keyFile": "${XHTTP_TLS_KEY_FILE}"
+          }
+        ]
+      },
+      "xhttpSettings": {
+        "host": "${XHTTP_HOST}",
+        "path": "${XHTTP_PATH}",
+        "mode": "auto"
+      }
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": [
+        "http",
+        "tls"
+      ]
+    }
+  }
+]

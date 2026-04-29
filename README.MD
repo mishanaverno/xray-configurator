@@ -65,10 +65,28 @@ make build-bot
 
 ## Запуск configurator
 
-Запустите configurator:
+Запустите configurator с дефолтным Reality preset:
 
 ```bash
 xr-conf --up-conf
+```
+
+То же самое явно:
+
+```bash
+xr-conf --up-conf reality
+```
+
+Для relay-сервера, который принимает xHTTP-трафик от основного Reality-сервера и выпускает его напрямую:
+
+```bash
+xr-conf --up-conf xhttp_relay
+```
+
+Для основного Reality-сервера, который отправляет RU-сегмент на `xhttp_relay`:
+
+```bash
+xr-conf --up-conf reality_xhttp_relay
 ```
 
 Configurator поднимет:
@@ -84,6 +102,12 @@ Configurator поднимет:
 /usr/local/share/xray/conf/templates/
 /usr/local/share/xray/conf/geosite.dat
 /usr/local/share/xray/conf/geoip.dat
+```
+
+Если на существующем volume сменить preset, текущая директория `templates/` будет сохранена в backup вида:
+
+```text
+/usr/local/share/xray/conf/templates.backup.YYYYMMDDHHMMSS
 ```
 
 Проверить состояние:
@@ -147,7 +171,117 @@ xr-conf --add-sni www.microsoft.com
 xr-conf --list-sni
 ```
 
-При старте Xray configurator проверяет текущий `XRAY_REALITY` через TLS 1.3. Если он не работает, будет выбран первый рабочий кандидат из `sni_list`.
+При старте с preset `reality` configurator проверяет текущий `XRAY_REALITY` через TLS 1.3. Если он не работает, будет выбран первый рабочий кандидат из `sni_list`.
+
+## Reality + xHTTP relay
+
+Preset `reality_xhttp_relay` - это клон `reality` с дополнительным outbound `xhttp_relay`.
+Клиенты подключаются к нему так же, как к обычному Reality-серверу, а сам сервер отправляет российский сегмент на отдельный xHTTP relay.
+
+Схема:
+
+```text
+client -> Reality server -> direct/warp
+client -> Reality server -> xHTTP relay -> RU internet
+```
+
+Запуск основного сервера:
+
+```bash
+xr-conf --up-conf reality_xhttp_relay
+```
+
+В `variables.env` основного сервера задайте параметры relay:
+
+```env
+XHTTP_RELAY_HOST=relay.example.com
+XHTTP_RELAY_PORT=443
+XHTTP_RELAY_PATH=/xhttp-relay
+XHTTP_RELAY_UUID=...
+XHTTP_RELAY_SSH_HOST=relay.example.com
+XHTTP_RELAY_SSH_USER=root
+XHTTP_RELAY_SSH_PORT=22
+```
+
+`XHTTP_RELAY_UUID` должен совпадать с `XHTTP_UUID` на relay-сервере.
+Routing в этом preset оставляет ChatGPT/OpenAI в outbound `warp`, а `domain:ru`, `geosite:category-gov-ru` и `geoip:ru` отправляет в outbound `xhttp_relay`.
+
+Для управления relay через бота основной сервер использует отдельный SSH key:
+
+```bash
+xr-conf --relay-keygen
+xr-conf --relay-pubkey
+```
+
+Добавьте public key на relay-сервер в `~/.ssh/authorized_keys` пользователя `XHTTP_RELAY_SSH_USER`.
+После этого основной configurator сможет выполнять на relay локальные API-команды через SSH:
+
+```bash
+xr-conf --relay-health
+xr-conf --relay-start
+xr-conf --relay-stop
+xr-conf --relay-restart
+```
+
+## xHTTP relay
+
+Preset `xhttp_relay` нужен для отдельного relay-сервера, который принимает трафик от основного Reality-сервера через VLESS + xHTTP + TLS.
+Основной Reality-сервер должен отправлять сюда только нужный сегмент, например RU-зону. Relay не ходит в Cloudflare WARP: все принятые запросы выпускаются через `freedom`, кроме явно заблокированного bittorrent.
+
+Схема:
+
+```text
+client -> Reality server -> xHTTP relay -> direct internet
+```
+
+В отличие от `reality`, preset `xhttp_relay` не содержит клиентские файлы:
+
+- `client_routing.json`;
+- `link.txt`;
+- `sni_list`;
+- Reality inbound/link templates.
+
+Рабочие файлы preset'а:
+
+```text
+presets/xhttp_relay/inbound.json
+presets/xhttp_relay/outbound.json
+presets/xhttp_relay/routing.json
+presets/xhttp_relay/variables.env
+```
+
+Запуск relay-сервера:
+
+```bash
+xr-conf --up-conf xhttp_relay
+```
+
+В `variables.env` relay-сервера задайте:
+
+```env
+XHTTP_HOST=relay.example.com
+XHTTP_PORT=8443
+XHTTP_PATH=/xhttp-relay
+XHTTP_UUID=...
+XHTTP_TLS_CERT_FILE=/usr/share/xray/certs/fullchain.pem
+XHTTP_TLS_KEY_FILE=/usr/share/xray/certs/privkey.pem
+```
+
+`XHTTP_UUID` можно сгенерировать командой:
+
+```bash
+docker exec xray-conf xray uuid
+```
+
+TLS-сертификат должен быть доступен внутри контейнера relay-сервера по путям из `XHTTP_TLS_CERT_FILE` и `XHTTP_TLS_KEY_FILE`.
+На relay-сервере снаружи должен быть открыт порт `443`. Nginx preset `xhttp_relay` принимает TLS на `443` и прокидывает поток в локальный Xray inbound `127.0.0.1:XHTTP_PORT`, по умолчанию `8443`, без proxy protocol.
+Если Xray при старте ругается на `network: xhttp`, обновите образ Xray/configurator до версии с поддержкой xHTTP.
+
+Применить изменения:
+
+```bash
+xr-conf --restart-xray
+```
 
 ## Настройка Telegram-бота
 
@@ -279,9 +413,13 @@ XRAY_SHORT_IDS='[""]'
 - `/users` - показать список пользователей и их shortId.
 - `/link <username>` - получить VLESS-ссылку пользователя с `sid`.
 - `/links <username>` - алиас для `/link`.
-- `/client_routing` - получить клиентские routing-правила.
+- `/client_routing` - получить клиентские routing-правила, если текущий preset их предоставляет.
 - `/add_sni <hostname>` - добавить SNI-кандидат для Reality fallback.
-- `/sni_list` - показать список SNI-кандидатов.
+- `/sni_list` - показать список SNI-кандидатов, если текущий preset использует SNI.
+- `/relay_health` - проверить xHTTP relay через SSH.
+- `/relay_start` - запустить Xray на xHTTP relay через SSH.
+- `/relay_stop` - остановить Xray на xHTTP relay через SSH.
+- `/relay_restart` - перезапустить Xray на xHTTP relay через SSH.
 
 ## Как использовать сервис
 
@@ -314,6 +452,12 @@ xr-conf --start-xray
 xr-conf --stop-xray
 xr-conf --restart-xray
 xr-conf --links
+xr-conf --relay-keygen
+xr-conf --relay-pubkey
+xr-conf --relay-health
+xr-conf --relay-start
+xr-conf --relay-stop
+xr-conf --relay-restart
 xr-conf --up-mtproto
 xr-conf --mtproto-logs
 xr-conf --down-mtproto

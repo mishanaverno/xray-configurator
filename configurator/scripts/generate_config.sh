@@ -17,17 +17,21 @@ set -a
 set +a
 export XRAY_UUID XRAY_PRIVATE_KEY XRAY_PUBLIC_KEY XRAY_HOST_IP XRAY_REALITY XRAY_SHORT_IDS
 
-for f in "$INBOUND_FILE" "$OUTBOUND_FILE" "$ROUTING_FILE" "$LINK_FILE"; do
+for f in "$INBOUND_FILE" "$OUTBOUND_FILE" "$ROUTING_FILE"; do
   [[ -f "$TEMPLATES_DIR/$f" ]] || { say "[ERROR] missing $TEMPLATES_DIR/$f" >&2; exit 1; }
 done
 
 inbounds=$(envsubst < "$TEMPLATES_DIR/$INBOUND_FILE" | jq 'if type=="array" then . else error("inbound.json must be array") end' )
 outbounds=$(envsubst < "$TEMPLATES_DIR/$OUTBOUND_FILE" | jq 'if type=="array" then . else error("outbound.json must be array") end' )
 routing=$(envsubst < "$TEMPLATES_DIR/$ROUTING_FILE" | jq 'if type=="object" then . else error("routing.json must be object") end' )
-link_tmp="$VOLUME/$LINK_FILE.tmp"
 config_tmp="$VOLUME/$CONFIG_FILE.tmp"
 
-envsubst < "$TEMPLATES_DIR/$LINK_FILE" > "$link_tmp"
+if [[ -f "$TEMPLATES_DIR/$LINK_FILE" ]]; then
+  link_tmp="$VOLUME/$LINK_FILE.tmp"
+  envsubst < "$TEMPLATES_DIR/$LINK_FILE" > "$link_tmp"
+else
+  link_tmp=""
+fi
 
 jq -n \
 --argjson inbounds "$inbounds" \
@@ -38,5 +42,9 @@ jq -n \
 
 jq . "$config_tmp" >/dev/null
 mv -f "$config_tmp" "$VOLUME/$CONFIG_FILE"
-mv -f "$link_tmp" "$VOLUME/$LINK_FILE"
+if [[ -n "$link_tmp" ]]; then
+  mv -f "$link_tmp" "$VOLUME/$LINK_FILE"
+else
+  rm -f "$VOLUME/$LINK_FILE"
+fi
 say "Complete! config.json is ready."

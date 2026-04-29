@@ -4,9 +4,9 @@ set -Eeuo pipefail
 LANG=C LC_ALL=C
 
 source /scripts/lib.sh
+source /scripts/env.sh
 
 XRAY_PID_FILE=/tmp/xray.pid
-XRAY_PORT=8443
 LOG_FILE="$(mktemp -t xray-health.XXXXXX)"
 
 fail() {
@@ -20,6 +20,14 @@ fail() {
 }
 
 trap 'rm -f "$LOG_FILE"' EXIT
+
+if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
+  set -a
+  . "$TEMPLATES_DIR/$VARIABLES_FILE"
+  set +a
+fi
+
+XRAY_PORT="${XHTTP_PORT:-8443}"
 
 # PID file exists?
 if [[ ! -f "$XRAY_PID_FILE" ]]; then
@@ -47,8 +55,12 @@ else
     || fail "Xray port $XRAY_PORT is not reachable on 127.0.0.1"
 fi
 
-if ! /scripts/ensure_reality.sh --check-only >"$LOG_FILE" 2>&1; then
-  fail "XRAY_REALITY TLS check failed"
+if [[ "$XRAY_PRESET" == reality* ]]; then
+  if ! /scripts/ensure_reality.sh --check-only >"$LOG_FILE" 2>&1; then
+    fail "XRAY_REALITY TLS check failed"
+  fi
+else
+  say "Skipping Reality/SNI check for preset: $XRAY_PRESET" >"$LOG_FILE"
 fi
 
 # Healthy

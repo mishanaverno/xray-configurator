@@ -39,6 +39,20 @@ chmod 2775 "$TEMPLATES_DIR"
 
 /scripts/generate_templates.sh
 
+NGINX_PRESET="$XRAY_PRESET"
+if [[ "$XRAY_PRESET" == reality* ]]; then
+    NGINX_PRESET="reality"
+fi
+
+NGINX_CONFIG="/tmp/xray/nginx/$NGINX_PRESET.conf"
+if [[ ! -f "$NGINX_CONFIG" ]]; then
+    say "[ERROR] nginx config does not exist for preset: $XRAY_PRESET" >&2
+    exit 1
+fi
+
+say "Using nginx config: $NGINX_PRESET"
+cp "$NGINX_CONFIG" /etc/nginx/nginx.conf
+
 if ! /scripts/update_geodat.sh --plain; then
     say "[WARN] geodat update failed; keeping existing geo files"
 fi
