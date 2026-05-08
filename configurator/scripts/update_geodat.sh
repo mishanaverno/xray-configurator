@@ -10,6 +10,18 @@ GEOSITE_TMP=""
 GEOIP_TMP=""
 PLAIN_OUTPUT=false
 
+GEOSITE_URLS=(
+  "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+  "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
+  "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+)
+
+GEOIP_URLS=(
+  "https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
+  "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
+  "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+)
+
 if [[ "${1:-}" == "--plain" ]]; then
   PLAIN_OUTPUT=true
 fi
@@ -38,6 +50,24 @@ fi
 
 : "${VOLUME:?VOLUME is not set}"
 
+download_dat() {
+  local output="$1"
+  shift
+  local url
+
+  for url in "$@"; do
+    say "Downloading $url" >>"$LOG_FILE"
+    if curl -fL --connect-timeout 10 --max-time 60 --retry 2 --retry-delay 2 -o "$output" "$url" >>"$LOG_FILE" 2>&1; then
+      if [[ -s "$output" ]]; then
+        return 0
+      fi
+      say "Downloaded file is empty: $url" >>"$LOG_FILE"
+    fi
+  done
+
+  return 1
+}
+
 if ! GEOSITE_TMP="$(mktemp "$VOLUME/geosite.dat.XXXXXX" 2>>"$LOG_FILE")"; then
   fail "Failed to create temporary geosite.dat"
 fi
@@ -46,11 +76,11 @@ if ! GEOIP_TMP="$(mktemp "$VOLUME/geoip.dat.XXXXXX" 2>>"$LOG_FILE")"; then
   fail "Failed to create temporary geoip.dat"
 fi
 
-if ! wget -T 20 -O "$GEOSITE_TMP" https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat >>"$LOG_FILE" 2>&1; then
+if ! download_dat "$GEOSITE_TMP" "${GEOSITE_URLS[@]}"; then
   fail "Failed to download geosite.dat"
 fi
 
-if ! wget -T 20 -O "$GEOIP_TMP" https://github.com/v2fly/geoip/releases/latest/download/geoip.dat >>"$LOG_FILE" 2>&1; then
+if ! download_dat "$GEOIP_TMP" "${GEOIP_URLS[@]}"; then
   fail "Failed to download geoip.dat"
 fi
 
