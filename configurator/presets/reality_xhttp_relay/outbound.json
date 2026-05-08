@@ -49,13 +49,14 @@
             "network": "xhttp",
             "security": "tls",
             "tlsSettings": {
-                "serverName": "${XHTTP_RELAY_HOST}",
+                "serverName": "${XHTTP_RELAY_SERVER_NAME}",
+                "allowInsecure": true,
                 "alpn": [
                     "h2"
                 ]
             },
             "xhttpSettings": {
-                "host": "${XHTTP_RELAY_HOST}",
+                "host": "${XHTTP_RELAY_SERVER_NAME}",
                 "path": "${XHTTP_RELAY_PATH}",
                 "mode": "auto"
             }

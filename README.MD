@@ -203,6 +203,7 @@ xr-conf --up-conf reality_xhttp_relay
 ```env
 XHTTP_RELAY_HOST=relay.example.com
 XHTTP_RELAY_PORT=443
+XHTTP_RELAY_SERVER_NAME=relay.local
 XHTTP_RELAY_PATH=/xhttp-relay
 XHTTP_RELAY_UUID=...
 XHTTP_RELAY_SSH_HOST=relay.example.com
@@ -212,6 +213,7 @@ XHTTP_RELAY_SSH_PORT=22
 
 `XHTTP_RELAY_UUID` должен совпадать с `XHTTP_UUID` на relay-сервере.
 `XHTTP_RELAY_PORT` должен совпадать с публичным портом, с которым запущен relay-сервер через `xr-conf --up-conf xhttp_relay [port]`.
+`XHTTP_RELAY_HOST` может быть IP relay VPS, а `XHTTP_RELAY_SERVER_NAME` должен совпадать с `XHTTP_HOST` на relay. В preset включен `allowInsecure: true`, поэтому self-signed TLS подходит для межсерверного туннеля.
 Routing в этом preset оставляет ChatGPT/OpenAI в outbound `warp`, а `domain:ru`, `geosite:category-gov-ru` и `geoip:ru` отправляет в outbound `xhttp_relay`.
 
 Для управления relay через бота основной сервер использует отдельный SSH key:
@@ -273,7 +275,7 @@ xr-conf --up-conf xhttp_relay
 В `variables.env` relay-сервера задайте:
 
 ```env
-XHTTP_HOST=relay.example.com
+XHTTP_HOST=relay.local
 XHTTP_PATH=/xhttp-relay
 XHTTP_UUID=...
 XHTTP_TLS_CERT_FILE=/usr/share/xray/certs/fullchain.pem
