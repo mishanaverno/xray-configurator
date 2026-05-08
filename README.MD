@@ -288,7 +288,8 @@ XHTTP_TLS_KEY_FILE=/usr/share/xray/certs/privkey.pem
 docker exec xray-conf xray uuid
 ```
 
-TLS-сертификат должен быть доступен внутри контейнера relay-сервера по путям из `XHTTP_TLS_CERT_FILE` и `XHTTP_TLS_KEY_FILE`.
+Если сертификата по путям `XHTTP_TLS_CERT_FILE` и `XHTTP_TLS_KEY_FILE` нет, configurator автоматически сгенерирует self-signed сертификат при `xr-conf --start-xray`.
+Если нужен свой сертификат, положите `fullchain.pem` и `privkey.pem` в `/usr/local/share/xray/conf/certs/` до старта Xray.
 На relay-сервере снаружи должен быть открыт порт, переданный в `xr-conf --up-conf xhttp_relay [port]`. Nginx preset `xhttp_relay` принимает TLS на этом порту и прокидывает поток в локальный Xray inbound `127.0.0.1:1050`, без proxy protocol.
 Если Xray при старте ругается на `network: xhttp`, обновите образ Xray/configurator до версии с поддержкой xHTTP.
 

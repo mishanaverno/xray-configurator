@@ -61,6 +61,16 @@ else
   say "Skipping Reality/SNI check for preset: $XRAY_PRESET" >"$LOG_FILE"
 fi
 
+if [[ "$XRAY_PRESET" == "xhttp_relay" ]]; then
+  if ! /scripts/ensure_xhttp_tls.sh >>"$LOG_FILE" 2>&1; then
+    http_error
+    say "Xray start failed"
+    say "xHTTP TLS certificate check failed"
+    cat "$LOG_FILE"
+    exit 1
+  fi
+fi
+
 # generate_config — буферизуем, но не трогаем вывод
 if ! /scripts/generate_config.sh >>"$LOG_FILE" 2>&1; then
   http_error
