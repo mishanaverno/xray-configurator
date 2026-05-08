@@ -22,6 +22,10 @@ fi
 : "${RELAY_SSH_KEY_FILE:?RELAY_SSH_KEY_FILE is not set}"
 
 if [[ -f "$RELAY_SSH_KEY_FILE" ]]; then
+  chown nginx:nginx "$RELAY_SSH_KEY_FILE" 2>>"$LOG_FILE" || fail "Failed to chown relay SSH private key"
+  [[ ! -f "$RELAY_SSH_KEY_FILE.pub" ]] || chown nginx:nginx "$RELAY_SSH_KEY_FILE.pub" 2>>"$LOG_FILE" || fail "Failed to chown relay SSH public key"
+  chmod 640 "$RELAY_SSH_KEY_FILE" 2>>"$LOG_FILE" || fail "Failed to chmod relay SSH private key"
+  [[ ! -f "$RELAY_SSH_KEY_FILE.pub" ]] || chmod 644 "$RELAY_SSH_KEY_FILE.pub" 2>>"$LOG_FILE" || fail "Failed to chmod relay SSH public key"
   say "[ensure_relay_ssh_key.sh] Relay SSH key already exists."
   exit 0
 fi
@@ -31,7 +35,8 @@ if ! ssh-keygen -t ed25519 -f "$RELAY_SSH_KEY_FILE" -N "" -C "xray-relay-control
   fail "Failed to generate relay SSH key"
 fi
 
-chmod 600 "$RELAY_SSH_KEY_FILE" 2>>"$LOG_FILE" || fail "Failed to chmod relay SSH private key"
+chown nginx:nginx "$RELAY_SSH_KEY_FILE" "$RELAY_SSH_KEY_FILE.pub" 2>>"$LOG_FILE" || fail "Failed to chown relay SSH key"
+chmod 640 "$RELAY_SSH_KEY_FILE" 2>>"$LOG_FILE" || fail "Failed to chmod relay SSH private key"
 chmod 644 "$RELAY_SSH_KEY_FILE.pub" 2>>"$LOG_FILE" || fail "Failed to chmod relay SSH public key"
 
 say "[ensure_relay_ssh_key.sh] Relay SSH key generated."
