@@ -3,6 +3,7 @@ set -euo pipefail
 LANG=C LC_ALL=C
 
 LOCAL="/usr/local/share/xray"
+XR_CONF_VERSION="2026-05-08-presets"
 
 CONF_NAME="xray-conf"
 BOT_NAME="xray-bot"
@@ -78,7 +79,7 @@ up_conf() {
     fi
 
     ensure_local_dirs
-    echo "[xr-conf] Starting the conteiner with xray preset: $preset"
+    echo "[xr-conf] Starting the container with xray preset: $preset"
     docker pull $CONF_IMAGE
     if [[ "$preset" == "xhttp_relay" ]]; then
         docker run -d \
@@ -400,6 +401,7 @@ list_sni_candidates() {
 if [ $# -eq 0 ]; then
     cat <<'EOF'
 Usage: xr-conf []
+    --version
     --up-conf [reality|reality_xhttp_relay|xhttp_relay] [xhttp_public_port]
     --down-conf
     --up-bot
@@ -430,6 +432,10 @@ fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --version)
+            echo "xr-conf $XR_CONF_VERSION"
+            shift
+            ;;
         --up-conf)
             if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
                 up_conf
