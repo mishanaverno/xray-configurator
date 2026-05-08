@@ -7,7 +7,7 @@
     "settings": {
       "clients": [
         {
-          "id": "${XHTTP_UUID}",
+          "id": "${XRAY_UUID}",
           "email": "reality-server"
         }
       ],

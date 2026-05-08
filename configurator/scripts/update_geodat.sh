@@ -46,11 +46,11 @@ if ! GEOIP_TMP="$(mktemp "$VOLUME/geoip.dat.XXXXXX" 2>>"$LOG_FILE")"; then
   fail "Failed to create temporary geoip.dat"
 fi
 
-if ! wget -O "$GEOSITE_TMP" https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat >>"$LOG_FILE" 2>&1; then
+if ! wget -T 20 -O "$GEOSITE_TMP" https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat >>"$LOG_FILE" 2>&1; then
   fail "Failed to download geosite.dat"
 fi
 
-if ! wget -O "$GEOIP_TMP" https://github.com/v2fly/geoip/releases/latest/download/geoip.dat >>"$LOG_FILE" 2>&1; then
+if ! wget -T 20 -O "$GEOIP_TMP" https://github.com/v2fly/geoip/releases/latest/download/geoip.dat >>"$LOG_FILE" 2>&1; then
   fail "Failed to download geoip.dat"
 fi
 

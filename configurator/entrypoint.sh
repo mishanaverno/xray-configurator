@@ -70,10 +70,12 @@ export XHTTP_PUBLIC_PORT
 say "Using nginx config: $NGINX_PRESET"
 envsubst '${XHTTP_PUBLIC_PORT}' < "$NGINX_CONFIG" > /etc/nginx/nginx.conf
 
-if ! /scripts/update_geodat.sh --plain; then
-    say "[WARN] geodat update failed; keeping existing geo files"
-fi
-
 umask 002 && spawn-fcgi -s /var/run/fcgiwrap.sock -M 660 -u nginx -g nginx /usr/bin/fcgiwrap
+
+(
+    if ! /scripts/update_geodat.sh --plain; then
+        say "[WARN] geodat update failed; keeping existing geo files"
+    fi
+) &
 
 exec nginx -g "daemon off;"
