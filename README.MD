@@ -216,10 +216,10 @@ XHTTP_RELAY_SSH_PORT=22
 `XHTTP_RELAY_HOST` может быть IP relay VPS, а `XHTTP_RELAY_SERVER_NAME` должен совпадать с `XHTTP_HOST` на relay. В preset включен `allowInsecure: true`, поэтому self-signed TLS подходит для межсерверного туннеля.
 Routing в этом preset оставляет ChatGPT/OpenAI в outbound `warp`, а `domain:ru`, `geosite:category-gov-ru` и `geoip:ru` отправляет в outbound `xhttp_relay`.
 
-Для управления relay через бота основной сервер использует отдельный SSH key:
+Для управления relay через бота основной сервер использует отдельный SSH key. В preset `reality_xhttp_relay` configurator генерирует его автоматически при старте контейнера.
+Посмотреть public key:
 
 ```bash
-xr-conf --relay-keygen
 xr-conf --relay-pubkey
 ```
 
@@ -479,7 +479,6 @@ xr-conf --start-xray
 xr-conf --stop-xray
 xr-conf --restart-xray
 xr-conf --links
-xr-conf --relay-keygen
 xr-conf --relay-pubkey
 xr-conf --set-relay-ssh relay.example.com root 22
 xr-conf --set-reality-relay-port 9443

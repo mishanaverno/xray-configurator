@@ -3,7 +3,7 @@ set -euo pipefail
 LANG=C LC_ALL=C
 
 LOCAL="/usr/local/share/xray"
-XR_CONF_VERSION="2026-05-08-api"
+XR_CONF_VERSION="2026-05-08-keygen"
 
 CONF_NAME="xray-conf"
 BOT_NAME="xray-bot"
@@ -213,28 +213,12 @@ relay_ssh_key_path() {
     printf '%s/conf/%s\n' "$LOCAL" "$RELAY_SSH_KEY_NAME"
 }
 
-relay_keygen() {
-    local key_path
-    key_path="$(relay_ssh_key_path)"
-
-    ensure_local_dirs
-    if [[ -f "$key_path" ]]; then
-        echo "[xr-conf] Relay SSH key already exists: $key_path"
-        return
-    fi
-
-    ssh-keygen -t ed25519 -f "$key_path" -N "" -C "xray-relay-control"
-    chmod 600 "$key_path"
-    chmod 644 "$key_path.pub"
-    echo "[xr-conf] Relay SSH key generated: $key_path"
-}
-
 relay_pubkey() {
     local key_path
     key_path="$(relay_ssh_key_path)"
 
     if [[ ! -f "$key_path.pub" ]]; then
-        echo "[xr-conf] ERROR: relay public key not found. Run: xr-conf --relay-keygen" >&2
+        echo "[xr-conf] ERROR: relay public key not found. Start reality_xhttp_relay first." >&2
         exit 1
     fi
 
@@ -435,7 +419,6 @@ Usage: xr-conf []
     --restart-xray
     --health-xray
     --links
-    --relay-keygen
     --relay-pubkey
     --relay-health
     --relay-start
@@ -518,10 +501,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --links)
             links
-            shift
-            ;;
-        --relay-keygen)
-            relay_keygen
             shift
             ;;
         --relay-pubkey)

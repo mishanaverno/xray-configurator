@@ -39,6 +39,10 @@ chmod 2775 "$TEMPLATES_DIR"
 
 /scripts/generate_templates.sh
 
+if [[ "$XRAY_PRESET" == "reality_xhttp_relay" ]]; then
+    /scripts/ensure_relay_ssh_key.sh
+fi
+
 chown -R nginx:nginx "$TEMPLATES_DIR"
 chmod 2775 "$TEMPLATES_DIR"
 
