@@ -3,7 +3,7 @@ set -euo pipefail
 LANG=C LC_ALL=C
 
 LOCAL="/usr/local/share/xray"
-XR_CONF_VERSION="2026-05-08-presets"
+XR_CONF_VERSION="2026-05-08-api"
 
 CONF_NAME="xray-conf"
 BOT_NAME="xray-bot"
@@ -158,21 +158,36 @@ mtproto_logs() {
     docker logs "$MTPROTO_NAME"
 }
 
+api_get() {
+    local path="$1"
+    local timeout="${2:-60}"
+
+    if ! curl -sS --max-time "$timeout" "http://127.0.0.1:8080$path"; then
+        echo "[xr-conf] ERROR: configurator API is unavailable at http://127.0.0.1:8080$path" >&2
+        echo "[xr-conf] Check container status: docker ps -a --filter name=$CONF_NAME" >&2
+        echo "[xr-conf] Check logs: docker logs --tail 100 $CONF_NAME" >&2
+        return 1
+    fi
+}
+
 start_xray() {
     echo "[xr-conf] Starting Xray..."
-    curl -s http://127.0.0.1:8080/start
+    api_get /start
+    echo
     health_xray
 }
 
 stop_xray() {
     echo "[xr-conf] Stopping Xray..."
-    curl -s http://127.0.0.1:8080/stop
+    api_get /stop
+    echo
     health_xray
 }
 
 health_xray() {
-    echo "[xr-conf] CHecking Xray..."
-    curl -s http://127.0.0.1:8080/health
+    echo "[xr-conf] Checking Xray..."
+    api_get /health
+    echo
 }
 
 restart_xray() {
@@ -183,13 +198,15 @@ restart_xray() {
 
 update() {
     echo "[xr-conf] Update geo files.."
-    curl -s http://127.0.0.1:8080/update
+    api_get /update
+    echo
     restart_xray
 }
 
 links() {
     echo "[xr-conf] Looking for links..."
-    curl -s http://127.0.0.1:8080/links
+    api_get /links
+    echo
 }
 
 relay_ssh_key_path() {
@@ -225,19 +242,23 @@ relay_pubkey() {
 }
 
 relay_health() {
-    curl -s http://127.0.0.1:8080/relay/health
+    api_get /relay/health
+    echo
 }
 
 relay_start() {
-    curl -s http://127.0.0.1:8080/relay/start
+    api_get /relay/start
+    echo
 }
 
 relay_stop() {
-    curl -s http://127.0.0.1:8080/relay/stop
+    api_get /relay/stop
+    echo
 }
 
 relay_restart() {
-    curl -s http://127.0.0.1:8080/relay/restart
+    api_get /relay/restart
+    echo
 }
 
 validate_port() {
