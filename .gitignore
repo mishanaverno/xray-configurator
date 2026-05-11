@@ -3,3 +3,4 @@ test/**/*
 xray-conf/**/*
 **/node_modules
 presets/backups/**/*
+presets/**/variables.env

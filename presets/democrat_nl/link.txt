@@ -1,1 +1,2 @@
-vless://${XRAY_UUID}@${XRAY_HOST_IP}:443/?encryption=none&type=tcp&sni=${XRAY_REALITY}&fp=chrome&security=reality&alpn=h2&flow=xtls-rprx-vision&pbk=${XRAY_PUBLIC_KEY}&packetEncoding=xudp#${LINK_TAG}
+vless://${XRAY_UUID}@${XRAY_HOST_IP}:443/?encryption=none&type=tcp&sni=${XRAY_REALITY}&fp=chrome&security=reality&alpn=h2&flow=xtls-rprx-vision&pbk=${XRAY_PUBLIC_KEY}&packetEncoding=xudp#${LINK_NL_TAG}
+vless://${RU_XRAY_UUID}@${RU_XRAY_HOST_IP}:443/?encryption=none&type=tcp&sni=${RU_XRAY_REALITY}&fp=chrome&security=reality&alpn=h2&flow=xtls-rprx-vision&pbk=${RU_XRAY_PUBLIC_KEY}&packetEncoding=xudp#${LINK_RU_TAG}

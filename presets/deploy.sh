@@ -119,6 +119,10 @@ main() {
   ssh -p "$remote_port" "$remote_user@$remote_host" \
     "find $quoted_target -maxdepth 1 -type f -printf '%f\n' | sort"
 
+  printf '[deploy-preset] Restarting remote Xray...\n'
+  ssh -p "$remote_port" "$remote_user@$remote_host" \
+    "curl -fsS --max-time 120 http://127.0.0.1:8080/restart || { curl -fsS --max-time 30 http://127.0.0.1:8080/stop; curl -fsS --max-time 120 http://127.0.0.1:8080/start; }"
+
   printf '[deploy-preset] Done.\n'
 }
 

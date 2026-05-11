@@ -17,11 +17,8 @@ const HELP_MESSAGE = [
     '/restart',
     'Пересобрать config.json из шаблонов и перезапустить Xray. Нужен после ручных правок preset.',
     '',
-    '/link',
-    'Получить VLESS-ссылку.',
-    '',
     '/links',
-    'То же самое, что /link.',
+    'Получить VLESS-ссылки. Каждая строка отправляется отдельным сообщением.',
     '',
     '/client_routing',
     'Получить JSON с клиентскими правилами маршрутизации.',
@@ -111,14 +108,29 @@ async function start() {
         await replyTemporaryText(ctx, HELP_MESSAGE);
     });
 
-    async function sendLink(ctx) {
+    async function sendLinks(ctx) {
         const { ok, body } = await fetchConfig('/links');
-        const message = ok ? body : `🔴 Failed to fetch link:\n${body}`;
-        await replyTemporaryText(ctx, message);
+        if (!ok) {
+            await replyTemporaryText(ctx, `🔴 Failed to fetch links:\n${body}`);
+            return;
+        }
+
+        const lines = body
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(Boolean);
+
+        if (lines.length === 0) {
+            await replyTemporaryText(ctx, 'Links list is empty');
+            return;
+        }
+
+        for (const line of lines) {
+            await replyTemporaryText(ctx, line);
+        }
     }
 
-    bot.command('link', sendLink);
-    bot.command('links', sendLink);
+    bot.command('links', sendLinks);
 
     bot.command('client_routing', async ctx => {
         const { ok, body } = await fetchConfig('/client-routing');

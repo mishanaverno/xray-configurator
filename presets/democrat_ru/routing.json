@@ -14,10 +14,6 @@
             "type": "field",
             "ip": ["geoip:ru"],
             "outboundTag": "direct"
-        },
-        {
-            "type": "field",
-            "outboundTag": "democrat_nl"
         }
     ],
     "domainStrategy": "IPIfNonMatch"

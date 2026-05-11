@@ -1,11 +1,11 @@
 # Xray Configurator
 
-Проект поднимает Xray Reality-сервер, локальный configurator API и Telegram-бота для управления пользователями, SNI и ссылками подключения.
+Проект поднимает Xray Reality-сервер, локальный configurator API и Telegram-бота для управления SNI, мониторингом и ссылками подключения.
 
 Состав:
 
 - `configurator` - контейнер с Xray, nginx, шаблонами конфигурации и локальным HTTP API.
-- `bot` - Telegram-бот со встроенным Redis, который ходит в configurator API и хранит пользователей.
+- `bot` - Telegram-бот, который ходит в configurator API.
 - `utils/xr-conf.sh` - CLI-утилита для ручного управления сервисом с хоста.
 
 ## Требования
@@ -113,15 +113,13 @@ xr-conf --start-xray
 ```env
 XRAY_LOG_LEVEL=warning
 XRAY_REALITY=google.com
-XRAY_SHORT_IDS='[""]'
 LINK1_TAG=VLESS_CONF
 ```
 
 Что важно:
 
 - `XRAY_REALITY` - SNI/Reality destination.
-- `XRAY_SHORT_IDS` - JSON-массив shortId для пользователей.
-- `XRAY_SHORT_IDS='[""]'` означает режим без `sid`; после создания пользователей бот заменит это на реальные id.
+- `LINK1_TAG` - подпись ссылки в `link.txt`.
 
 После ручного изменения templates нужно перезапустить Xray:
 
@@ -277,13 +275,9 @@ xr-conf --restart-xray
 BOT_TOKEN=123456:telegram-bot-token
 CHAT_ID=123456789
 XRAY_API_BASE=http://127.0.0.1:8080
-REDIS_USERS_KEY=xray:users
 ```
 
 `CHAT_ID` - id Telegram-чата, из которого разрешено управлять ботом. Сообщения из других чатов бот игнорирует.
-
-Redis запускается внутри bot-контейнера. Его данные лежат в `/data`, поэтому для сохранения пользователей между перезапусками нужно подключить volume.
-`xr-conf --up-bot` подключит `/usr/local/share/xray/bot-data:/data` автоматически.
 
 Запуск:
 
@@ -329,76 +323,12 @@ xr-conf --down-mtproto
 MTPROTO_PORT=9443 xr-conf --up-mtproto
 ```
 
-## Создание пользователя
-
-В Telegram:
-
-```text
-/create_user alice
-```
-
-Бот:
-
-1. Генерирует Reality shortId длиной 8 hex-символов.
-2. Сохраняет `alice -> shortId` в Redis.
-3. Добавляет shortId в `XRAY_SHORT_IDS` в `variables.env`.
-
-После создания пользователя примените изменения:
-
-```text
-/restart
-```
-
-Получить ссылку:
-
-```text
-/link alice
-```
-
-Бот вернет VLESS-ссылку с подставленным:
-
-```text
-sid=<shortId>
-```
-
-Эту ссылку нужно импортировать в клиент, который поддерживает VLESS + Reality.
-
-## Удаление пользователя
-
-В Telegram:
-
-```text
-/delete_user alice
-```
-
-Бот:
-
-1. Находит shortId пользователя в Redis.
-2. Удаляет shortId из `XRAY_SHORT_IDS`.
-3. Удаляет пользователя из Redis.
-
-Если это был последний пользователь, `XRAY_SHORT_IDS` вернется к:
-
-```env
-XRAY_SHORT_IDS='[""]'
-```
-
-После удаления примените изменения:
-
-```text
-/restart
-```
-
 ## Команды бота
 
 - `/help` - показать подсказку со всеми командами.
 - `/health` - проверить состояние Xray и Reality/SNI.
-- `/restart` - пересобрать config и перезапустить Xray. Используйте после создания/удаления пользователя.
-- `/create_user <username>` - создать пользователя, сгенерировать shortId и добавить его в `XRAY_SHORT_IDS`.
-- `/delete_user <username>` - удалить пользователя и убрать его shortId из `XRAY_SHORT_IDS`.
-- `/users` - показать список пользователей и их shortId.
-- `/link <username>` - получить VLESS-ссылку пользователя с `sid`.
-- `/links <username>` - алиас для `/link`.
+- `/restart` - пересобрать config и перезапустить Xray.
+- `/links` - получить VLESS-ссылки; каждая строка отправляется отдельным сообщением.
 - `/client_routing` - получить клиентские routing-правила, если текущий preset их предоставляет.
 - `/add_sni <hostname>` - добавить SNI-кандидат для Reality fallback.
 - `/sni_list` - показать список SNI-кандидатов, если текущий preset использует SNI.
@@ -415,10 +345,8 @@ XRAY_SHORT_IDS='[""]'
 2. Проверить `/health`.
 3. Запустить Xray через `/start` или `/restart`.
 4. Запустить Telegram-бота.
-5. Создать пользователя через `/create_user username`.
-6. Выполнить `/restart`.
-7. Получить ссылку через `/link username`.
-8. Импортировать ссылку в клиент.
+5. Получить ссылки через `/links`.
+6. Импортировать нужную ссылку в клиент.
 
 Для клиентских routing-правил:
 
@@ -461,16 +389,9 @@ docker restart xray-conf
 docker restart xray-bot
 ```
 
-Redis внутри bot-контейнера:
-
-```bash
-docker exec -it xray-bot redis-cli HGETALL xray:users
-```
-
 ## Важные замечания
 
 - `secrets.env` содержит приватный Reality key. Не публикуйте этот файл.
-- После изменения пользователей, SNI или templates нужен restart Xray.
-- `XRAY_SHORT_IDS='[""]'` разрешает подключение без `sid`; после создания пользователей лучше использовать ссылки с персональным `sid`.
+- После изменения SNI или templates нужен restart Xray.
 - Configurator API рассчитан на локальный доступ. Не публикуйте порт `8080` наружу.
 - Контейнер configurator должен иметь право слушать внешний proxy-порт `443`.
