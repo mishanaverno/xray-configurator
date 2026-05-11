@@ -6,10 +6,10 @@ LANG=C LC_ALL=C
 source /scripts/env.sh
 source /scripts/lib.sh
 
-: "${TEMPLATES_DIR:?TEMPLATES_DIR is not set}"
+: "${PRESET_DIR:?PRESET_DIR is not set}"
 : "${VARIABLES_FILE:?VARIABLES_FILE is not set}"
 
-VARIABLES_PATH="$TEMPLATES_DIR/$VARIABLES_FILE"
+VARIABLES_PATH="$PRESET_DIR/$VARIABLES_FILE"
 
 fail() {
   http_error
@@ -46,7 +46,7 @@ if [[ ! "$short_id" =~ ^[0-9a-fA-F]{2,16}$ || $(( ${#short_id} % 2 )) -ne 0 ]]; 
 fi
 
 short_id="$(printf '%s' "$short_id" | tr '[:upper:]' '[:lower:]')"
-mkdir -p "$TEMPLATES_DIR"
+mkdir -p "$PRESET_DIR"
 touch "$VARIABLES_PATH"
 
 current_value="$(awk -F= '$1 == "XRAY_SHORT_IDS" {print substr($0, index($0, "=") + 1); exit}' "$VARIABLES_PATH")"

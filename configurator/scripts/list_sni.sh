@@ -6,10 +6,10 @@ LANG=C LC_ALL=C
 source /scripts/env.sh
 source /scripts/lib.sh
 
-: "${TEMPLATES_DIR:?TEMPLATES_DIR is not set}"
+: "${PRESET_DIR:?PRESET_DIR is not set}"
 : "${SNI_LIST_FILE:?SNI_LIST_FILE is not set}"
 
-SNI_LIST_PATH="$TEMPLATES_DIR/$SNI_LIST_FILE"
+SNI_LIST_PATH="$PRESET_DIR/$SNI_LIST_FILE"
 
 http_ok
 

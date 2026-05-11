@@ -7,10 +7,10 @@ source /scripts/env.sh
 source /scripts/lib.sh
 source /scripts/sni_lib.sh
 
-: "${TEMPLATES_DIR:?TEMPLATES_DIR is not set}"
+: "${PRESET_DIR:?PRESET_DIR is not set}"
 : "${SNI_LIST_FILE:?SNI_LIST_FILE is not set}"
 
-SNI_LIST_PATH="$TEMPLATES_DIR/$SNI_LIST_FILE"
+SNI_LIST_PATH="$PRESET_DIR/$SNI_LIST_FILE"
 
 fail() {
   http_error
@@ -27,7 +27,7 @@ if ! is_valid_hostname "$candidate"; then
   fail "Invalid SNI hostname"
 fi
 
-mkdir -p "$TEMPLATES_DIR"
+mkdir -p "$PRESET_DIR"
 touch "$SNI_LIST_PATH"
 
 if grep -Fqx "$candidate" "$SNI_LIST_PATH"; then

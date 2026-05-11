@@ -22,10 +22,10 @@ if ! source /scripts/env.sh >"$LOG_FILE" 2>&1; then
   fail "Failed to load env.sh"
 fi
 
-: "${TEMPLATES_DIR:?TEMPLATES_DIR is not set}"
+: "${PRESET_DIR:?PRESET_DIR is not set}"
 : "${CLIENT_ROUTING_FILE:?CLIENT_ROUTING_FILE is not set}"
 
-CLIENT_ROUTING_PATH="$TEMPLATES_DIR/$CLIENT_ROUTING_FILE"
+CLIENT_ROUTING_PATH="$PRESET_DIR/$CLIENT_ROUTING_FILE"
 
 if [[ ! -f "$CLIENT_ROUTING_PATH" ]]; then
   fail "Missing $CLIENT_ROUTING_PATH"

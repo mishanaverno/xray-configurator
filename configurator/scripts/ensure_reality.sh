@@ -12,12 +12,12 @@ if [[ "${1:-}" == "--check-only" ]]; then
   CHECK_ONLY=true
 fi
 
-: "${TEMPLATES_DIR:?TEMPLATES_DIR is not set}"
+: "${PRESET_DIR:?PRESET_DIR is not set}"
 : "${VARIABLES_FILE:?VARIABLES_FILE is not set}"
 : "${SNI_LIST_FILE:?SNI_LIST_FILE is not set}"
 
-VARIABLES_PATH="$TEMPLATES_DIR/$VARIABLES_FILE"
-SNI_LIST_PATH="$TEMPLATES_DIR/$SNI_LIST_FILE"
+VARIABLES_PATH="$PRESET_DIR/$VARIABLES_FILE"
+SNI_LIST_PATH="$PRESET_DIR/$SNI_LIST_FILE"
 
 tls_ok() {
   local host="$1"

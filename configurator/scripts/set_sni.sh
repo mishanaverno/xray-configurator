@@ -7,10 +7,10 @@ source /scripts/env.sh
 source /scripts/lib.sh
 source /scripts/sni_lib.sh
 
-: "${TEMPLATES_DIR:?TEMPLATES_DIR is not set}"
+: "${PRESET_DIR:?PRESET_DIR is not set}"
 : "${VARIABLES_FILE:?VARIABLES_FILE is not set}"
 
-VARIABLES_PATH="$TEMPLATES_DIR/$VARIABLES_FILE"
+VARIABLES_PATH="$PRESET_DIR/$VARIABLES_FILE"
 
 fail() {
   http_error
@@ -47,7 +47,7 @@ if ! is_valid_hostname "$reality"; then
   fail "Invalid SNI hostname"
 fi
 
-mkdir -p "$TEMPLATES_DIR"
+mkdir -p "$PRESET_DIR"
 touch "$VARIABLES_PATH"
 
 tmp="$(mktemp "$VARIABLES_PATH.XXXXXX")"

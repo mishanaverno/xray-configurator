@@ -4,8 +4,8 @@ LANG=C LC_ALL=C
 
 export XRAY_BIN=/usr/bin/xray
 export VOLUME=/usr/share/xray
-export DEFAULTS_DIR=/preset
-export TEMPLATES_DIR=$VOLUME/templates
+export BUILTIN_PRESET_DIR=/preset
+export PRESET_DIR=$VOLUME/preset
 export CONFIG_FILE=config.json
 export VARIABLES_FILE=variables.env
 export SECRETS_FILE=secrets.env

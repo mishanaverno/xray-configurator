@@ -20,31 +20,31 @@ fi
 chown -R nginx:nginx "$VOLUME"
 chmod 2775 "$VOLUME"
 
-if [[ -e "$TEMPLATES_DIR" && ! -d "$TEMPLATES_DIR" ]]; then
-    say "[ERROR] $TEMPLATES_DIR exists and is not a directory" >&2
+if [[ -e "$PRESET_DIR" && ! -d "$PRESET_DIR" ]]; then
+    say "[ERROR] $PRESET_DIR exists and is not a directory" >&2
     exit 1
 fi
 
-if [[ ! -d "$TEMPLATES_DIR" ]]; then
-    say "Initializing $TEMPLATES_DIR dir..."
-    mkdir -p "$TEMPLATES_DIR"
+if [[ ! -d "$PRESET_DIR" ]]; then
+    say "Initializing $PRESET_DIR dir..."
+    mkdir -p "$PRESET_DIR"
 else 
-    say "$TEMPLATES_DIR already exists."
+    say "$PRESET_DIR already exists."
 fi
 
-chown -R nginx:nginx "$TEMPLATES_DIR"
-chmod 2775 "$TEMPLATES_DIR"
+chown -R nginx:nginx "$PRESET_DIR"
+chmod 2775 "$PRESET_DIR"
 
 /scripts/generate_secrets.sh
 
 /scripts/generate_templates.sh
 
-if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]] && grep -Eq '^SLAVE_(SSH_HOST|HOST)=' "$TEMPLATES_DIR/$VARIABLES_FILE"; then
+if [[ -f "$PRESET_DIR/$VARIABLES_FILE" ]] && grep -Eq '^SLAVE_(SSH_HOST|HOST)=' "$PRESET_DIR/$VARIABLES_FILE"; then
     /scripts/ensure_slave_ssh_key.sh
 fi
 
-chown -R nginx:nginx "$TEMPLATES_DIR"
-chmod 2775 "$TEMPLATES_DIR"
+chown -R nginx:nginx "$PRESET_DIR"
+chmod 2775 "$PRESET_DIR"
 
 NGINX_CONFIG="/tmp/xray/nginx/reality.conf"
 if [[ ! -f "$NGINX_CONFIG" ]]; then
@@ -52,9 +52,9 @@ if [[ ! -f "$NGINX_CONFIG" ]]; then
     exit 1
 fi
 
-if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
+if [[ -f "$PRESET_DIR/$VARIABLES_FILE" ]]; then
     set -a
-    . "$TEMPLATES_DIR/$VARIABLES_FILE"
+    . "$PRESET_DIR/$VARIABLES_FILE"
     set +a
 fi
 

@@ -20,7 +20,7 @@ fail() {
 
 trap 'rm -f "$LOG_FILE"' EXIT
 
-role_file="$TEMPLATES_DIR/.role"
+role_file="$PRESET_DIR/.role"
 role="master"
 if [[ -f "$role_file" ]]; then
   role="$(tr -d '[:space:]' < "$role_file")"
@@ -30,9 +30,9 @@ if [[ "$role" != "master" ]]; then
   fail "Slave control is allowed only on role=master; current role=${role:-unknown}"
 fi
 
-if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
+if [[ -f "$PRESET_DIR/$VARIABLES_FILE" ]]; then
   set -a
-  . "$TEMPLATES_DIR/$VARIABLES_FILE"
+  . "$PRESET_DIR/$VARIABLES_FILE"
   set +a
 fi
 

@@ -21,9 +21,9 @@ fail() {
 
 trap 'rm -f "$LOG_FILE"' EXIT
 
-if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
+if [[ -f "$PRESET_DIR/$VARIABLES_FILE" ]]; then
   set -a
-  . "$TEMPLATES_DIR/$VARIABLES_FILE"
+  . "$PRESET_DIR/$VARIABLES_FILE"
   set +a
 fi
 
