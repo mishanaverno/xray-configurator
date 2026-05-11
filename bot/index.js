@@ -1,13 +1,10 @@
-const { randomBytes } = require("crypto");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const { Telegraf } = require("telegraf");
-const { createClient } = require("redis");
 const { fetchConfig } = require("./fetch-conf.js");
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
 const DEFAULT_MESSAGE_TTL_MS = 60 * 60 * 1000;
-const USERNAME_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const HELP_MESSAGE = [
     'Команды управления Xray:',
     '',
@@ -18,21 +15,12 @@ const HELP_MESSAGE = [
     'Проверить, запущен ли Xray и проходит ли Reality/SNI health check.',
     '',
     '/restart',
-    'Пересобрать config.json из шаблонов и перезапустить Xray. Нужен после создания/удаления пользователя и ручных правок templates.',
+    'Пересобрать config.json из шаблонов и перезапустить Xray. Нужен после ручных правок preset.',
     '',
-    '/create_user <username>',
-    'Создать пользователя, сгенерировать ему shortId, сохранить в Redis и добавить shortId в XRAY_SHORT_IDS.',
+    '/link',
+    'Получить VLESS-ссылку.',
     '',
-    '/delete_user <username>',
-    'Удалить пользователя из Redis и убрать его shortId из XRAY_SHORT_IDS.',
-    '',
-    '/users',
-    'Показать список пользователей и их shortId.',
-    '',
-    '/link <username>',
-    'Получить VLESS-ссылку пользователя с подставленным sid.',
-    '',
-    '/links <username>',
+    '/links',
     'То же самое, что /link.',
     '',
     '/client_routing',
@@ -92,51 +80,13 @@ function parseCommandArg(ctx) {
     return ctx.message.text.split(/\s+/)[1];
 }
 
-function isValidUsername(username) {
-    return USERNAME_RE.test(username);
-}
-
-function generateShortId() {
-    return randomBytes(4).toString("hex");
-}
-
-function addSidToLink(link, sid) {
-    try {
-        const url = new URL(link);
-        url.searchParams.set("sid", sid);
-        return url.toString();
-    } catch (e) {
-        return link;
-    }
-}
-
-function addSidToLinks(body, sid) {
-    return body
-        .split(/\r?\n/)
-        .map(line => {
-            const trimmed = line.trim();
-            return trimmed ? addSidToLink(trimmed, sid) : line;
-        })
-        .join("\n");
-}
-
 async function start() {
     const BOT_TOKEN = process.env.BOT_TOKEN;
     const CHAT_ID = parseInt(process.env.CHAT_ID, 10);
-    const ADMINS = process.env.ADMINS ? process.env.ADMINS.split(',') : [];
-    const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
-    const REDIS_USERS_KEY = process.env.REDIS_USERS_KEY || "xray:users";
 
     const execAsync = promisify(exec);
     const { stdout: host} = await execAsync('hostname -i')
     const bot = new Telegraf(BOT_TOKEN);
-    const redis = createClient({ url: REDIS_URL });
-
-    redis.on("error", err => {
-        console.error("[xray-bot] Redis error:", err);
-    });
-
-    await redis.connect();
 
     bot.use(async (ctx, next) => {
         if (ctx.chat && ctx.chat.id && ctx.chat.id !== CHAT_ID) {
@@ -161,93 +111,14 @@ async function start() {
         await replyTemporaryText(ctx, HELP_MESSAGE);
     });
 
-    bot.command('create_user', async ctx => {
-        const username = parseCommandArg(ctx);
-        if (!username || !isValidUsername(username)) {
-            await replyTemporaryText(ctx, 'Usage: /create_user username\nAllowed: latin letters, digits, _ and -');
-            return;
-        }
-
-        const existingId = await redis.hGet(REDIS_USERS_KEY, username);
-        if (existingId) {
-            await replyTemporaryText(ctx, `User already exists: ${username}\nid: ${existingId}`);
-            return;
-        }
-
-        const id = generateShortId();
-        await redis.hSet(REDIS_USERS_KEY, username, id);
-
-        const addShortId = await fetchConfig(`/short-ids/add?short_id=${encodeURIComponent(id)}`);
-        if (!addShortId.ok) {
-            await redis.hDel(REDIS_USERS_KEY, username);
-            await replyTemporaryText(ctx, `Failed to register short id for Xray:\n${addShortId.body}`);
-            return;
-        }
-
-        await replyTemporaryText(ctx, `User created: ${username}\nid: ${id}\nRun /restart to apply it in Xray.`);
-    });
-
-    bot.command('delete_user', async ctx => {
-        const username = parseCommandArg(ctx);
-        if (!username || !isValidUsername(username)) {
-            await replyTemporaryText(ctx, 'Usage: /delete_user username');
-            return;
-        }
-
-        const id = await redis.hGet(REDIS_USERS_KEY, username);
-        if (!id) {
-            await replyTemporaryText(ctx, `User not found: ${username}`);
-            return;
-        }
-
-        const removeShortId = await fetchConfig(`/short-ids/remove?short_id=${encodeURIComponent(id)}`);
-        if (!removeShortId.ok) {
-            await replyTemporaryText(ctx, `Failed to remove short id from Xray:\n${removeShortId.body}`);
-            return;
-        }
-
-        await redis.hDel(REDIS_USERS_KEY, username);
-        await replyTemporaryText(ctx, `User deleted: ${username}\nid: ${id}\nRun /restart to apply it in Xray.`);
-    });
-
-    bot.command('users', async ctx => {
-        const users = await redis.hGetAll(REDIS_USERS_KEY);
-        const entries = Object.entries(users).sort(([a], [b]) => a.localeCompare(b));
-
-        if (entries.length === 0) {
-            await replyTemporaryText(ctx, 'Users list is empty');
-            return;
-        }
-
-        const message = [
-            'Users:',
-            '',
-            ...entries.map(([username, id]) => `${username}: ${id}`)
-        ].join('\n');
-
-        await replyTemporaryText(ctx, message);
-    });
-
-    async function sendUserLink(ctx) {
-        const username = parseCommandArg(ctx);
-        if (!username || !isValidUsername(username)) {
-            await replyTemporaryText(ctx, 'Usage: /link username');
-            return;
-        }
-
-        const sid = await redis.hGet(REDIS_USERS_KEY, username);
-        if (!sid) {
-            await replyTemporaryText(ctx, `User not found: ${username}`);
-            return;
-        }
-
+    async function sendLink(ctx) {
         const { ok, body } = await fetchConfig('/links');
-        const message = ok ? addSidToLinks(body, sid) : `🔴 Failed to fetch link:\n${body}`;
+        const message = ok ? body : `🔴 Failed to fetch link:\n${body}`;
         await replyTemporaryText(ctx, message);
     }
 
-    bot.command('link', sendUserLink);
-    bot.command('links', sendUserLink);
+    bot.command('link', sendLink);
+    bot.command('links', sendLink);
 
     bot.command('client_routing', async ctx => {
         const { ok, body } = await fetchConfig('/client-routing');
