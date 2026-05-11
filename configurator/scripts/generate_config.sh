@@ -3,6 +3,7 @@ set -euo pipefail
 LANG=C LC_ALL=C
 
 source /scripts/lib.sh
+source /scripts/env.sh
 
 say "Building config.json from templates in $TEMPLATES_DIR ..."
 set -a

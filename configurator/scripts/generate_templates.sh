@@ -4,6 +4,7 @@ set -euo pipefail
 LANG=C LC_ALL=C
 
 source /scripts/lib.sh
+source /scripts/env.sh
 
 say "Building default templates..."
 

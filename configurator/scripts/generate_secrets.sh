@@ -4,6 +4,7 @@ set -euo pipefail
 LANG=C LC_ALL=C
 
 source /scripts/lib.sh
+source /scripts/env.sh
 
 if [[ ! -f "$VOLUME/$SECRETS_FILE" ]]; then
   say "Generating fresh UUID and x25519..."

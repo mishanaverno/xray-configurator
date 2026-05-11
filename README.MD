@@ -65,35 +65,13 @@ make build-bot
 
 ## Запуск configurator
 
-Запустите configurator с дефолтным Reality preset:
+Запустите configurator:
 
 ```bash
 xr-conf --up-conf
 ```
 
-То же самое явно:
-
-```bash
-xr-conf --up-conf reality
-```
-
-Для slave-сервера, который принимает xHTTP-трафик от основного Reality-сервера и выпускает его напрямую:
-
-```bash
-xr-conf --up-conf xhttp_slave
-```
-
-Если нужен внешний порт не `443`:
-
-```bash
-xr-conf --up-conf xhttp_slave 9443
-```
-
-Для основного Reality-сервера, который отправляет RU-сегмент на `xhttp_slave`:
-
-```bash
-xr-conf --up-conf reality_xhttp_slave
-```
+`xr-conf --up-conf` не принимает имя preset'а. Контейнер всегда использует встроенный шаблон из `configurator/preset`.
 
 Configurator поднимет:
 
@@ -108,12 +86,6 @@ Configurator поднимет:
 /usr/local/share/xray/conf/templates/
 /usr/local/share/xray/conf/geosite.dat
 /usr/local/share/xray/conf/geoip.dat
-```
-
-Если на существующем volume сменить preset, текущая директория `templates/` будет сохранена в backup вида:
-
-```text
-/usr/local/share/xray/conf/templates.backup.YYYYMMDDHHMMSS
 ```
 
 Проверить состояние:
@@ -179,7 +151,12 @@ xr-conf --list-sni
 
 При старте с preset `reality` configurator проверяет текущий `XRAY_REALITY` через TLS 1.3. Если он не работает, будет выбран первый рабочий кандидат из `sni_list`.
 
-## Reality + xHTTP slave
+## Альтернативные presets
+
+В корневой директории `presets/` лежат альтернативные шаблоны. Они не подключаются к уже собранному контейнеру автоматически.
+Чтобы собрать образ с другим шаблоном, перенесите нужный preset в `configurator/preset` до сборки configurator.
+
+### Reality + xHTTP slave
 
 Preset `reality_xhttp_slave` - это клон `reality` с дополнительным outbound `xhttp_slave`.
 Клиенты подключаются к нему так же, как к обычному Reality-серверу, а сам сервер отправляет российский сегмент на отдельный xHTTP slave.
@@ -189,12 +166,6 @@ Preset `reality_xhttp_slave` - это клон `reality` с дополнител
 ```text
 client -> Reality server -> direct/warp
 client -> Reality server -> xHTTP slave -> RU internet
-```
-
-Запуск основного сервера:
-
-```bash
-xr-conf --up-conf reality_xhttp_slave
 ```
 
 В `variables.env` основного сервера задайте параметры slave:
@@ -211,7 +182,7 @@ SLAVE_SSH_PORT=22
 ```
 
 `SLAVE_UUID` должен совпадать с `XRAY_UUID` на slave-сервере.
-`SLAVE_PORT` должен совпадать с публичным портом, с которым запущен slave-сервер через `xr-conf --up-conf xhttp_slave [port]`.
+`SLAVE_PORT` должен совпадать с публичным портом slave-сервера.
 `SLAVE_HOST` может быть IP slave VPS, а `SLAVE_SERVER_NAME` должен совпадать с `HOST` на slave. В preset включен `allowInsecure: true`, поэтому self-signed TLS подходит для межсерверного туннеля.
 Routing в этом preset оставляет ChatGPT/OpenAI в outbound `warp`, а `domain:ru`, `geosite:category-gov-ru` и `geoip:ru` отправляет в outbound `xhttp_slave`.
 
@@ -238,7 +209,7 @@ xr-conf --slave-stop
 xr-conf --slave-restart
 ```
 
-## xHTTP slave
+### xHTTP slave
 
 Preset `xhttp_slave` нужен для отдельного slave-сервера, который принимает трафик от основного Reality-сервера через VLESS + xHTTP + TLS.
 Основной Reality-сервер должен отправлять сюда только нужный сегмент, например RU-зону. slave не ходит в Cloudflare WARP: все принятые запросы выпускаются через `freedom`, кроме явно заблокированного bittorrent.
@@ -265,12 +236,6 @@ presets/xhttp_slave/routing.json
 presets/xhttp_slave/variables.env
 ```
 
-Запуск slave-сервера:
-
-```bash
-xr-conf --up-conf xhttp_slave
-```
-
 В `variables.env` slave-сервера задайте:
 
 ```env
@@ -288,17 +253,13 @@ docker exec xray-conf sh -lc '. /usr/share/xray/secrets.env; echo "$XRAY_UUID"'
 
 Если сертификата по путям `TLS_CERT_FILE` и `TLS_KEY_FILE` нет, configurator автоматически сгенерирует self-signed сертификат при `xr-conf --start-xray`.
 Если нужен свой сертификат, положите `fullchain.pem` и `privkey.pem` в `/usr/local/share/xray/conf/certs/` до старта Xray.
-На slave-сервере снаружи должен быть открыт порт, переданный в `xr-conf --up-conf xhttp_slave [port]`. Nginx preset `xhttp_slave` принимает TLS на этом порту и прокидывает поток в локальный Xray inbound `127.0.0.1:1050`, без proxy protocol.
+На slave-сервере снаружи должен быть открыт публичный порт, который принимает TLS и прокидывает поток в локальный Xray inbound `127.0.0.1:1050`.
 Если Xray при старте ругается на `network: xhttp`, обновите образ Xray/configurator до версии с поддержкой xHTTP.
 
-Поменять внешний порт slave можно так:
+Поменять порт slave для основного сервера можно так:
 
 ```bash
-# пересоздать slave-контейнер с новым внешним портом
-xr-conf --down-conf
-xr-conf --up-conf xhttp_slave 9443
-
-# на основном reality_xhttp_slave сервере указать тот же порт
+# на основном reality_xhttp_slave сервере указать новый порт slave
 xr-conf --set-reality-slave-port 9443
 ```
 
@@ -512,4 +473,4 @@ docker exec -it xray-bot redis-cli HGETALL xray:users
 - После изменения пользователей, SNI или templates нужен restart Xray.
 - `XRAY_SHORT_IDS='[""]'` разрешает подключение без `sid`; после создания пользователей лучше использовать ссылки с персональным `sid`.
 - Configurator API рассчитан на локальный доступ. Не публикуйте порт `8080` наружу.
-- Контейнер configurator должен иметь право слушать внешний proxy-порт: `443` для Reality preset'ов или порт, переданный в `xr-conf --up-conf xhttp_slave [port]`.
+- Контейнер configurator должен иметь право слушать внешний proxy-порт `443`.
