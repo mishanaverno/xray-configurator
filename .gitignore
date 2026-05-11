@@ -2,3 +2,4 @@ passwords
 test/**/*
 xray-conf/**/*
 **/node_modules
+presets/backups/**/*
