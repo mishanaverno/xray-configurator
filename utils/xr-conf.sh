@@ -194,8 +194,12 @@ slave_pubkey() {
     key_path="$(slave_ssh_key_path)"
 
     if [[ ! -f "$key_path.pub" ]]; then
-        echo "[xr-conf] ERROR: slave public key not found. Start a preset with slave SSH variables first." >&2
-        exit 1
+        echo "[xr-conf] slave public key not found; trying to generate it in $CONF_NAME..."
+        if ! docker exec "$CONF_NAME" /scripts/ensure_slave_ssh_key.sh >/dev/null; then
+            echo "[xr-conf] ERROR: failed to generate slave SSH key." >&2
+            echo "[xr-conf] Check that $CONF_NAME is running and current preset contains SLAVE_SSH_HOST or SLAVE_HOST." >&2
+            exit 1
+        fi
     fi
 
     cat "$key_path.pub"
