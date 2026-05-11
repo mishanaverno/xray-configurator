@@ -44,17 +44,17 @@ const HELP_MESSAGE = [
     '/sni_list',
     'Показать текущий список SNI-кандидатов.',
     '',
-    '/relay_health',
-    'Проверить xHTTP relay через SSH с основного сервера.',
+    '/slave_health',
+    'Проверить slave через SSH с master-сервера.',
     '',
-    '/relay_start',
-    'Запустить Xray на xHTTP relay через SSH.',
+    '/slave_start',
+    'Запустить Xray на slave через SSH.',
     '',
-    '/relay_stop',
-    'Остановить Xray на xHTTP relay через SSH.',
+    '/slave_stop',
+    'Остановить Xray на slave через SSH.',
     '',
-    '/relay_restart',
-    'Перезапустить Xray на xHTTP relay через SSH.'
+    '/slave_restart',
+    'Перезапустить Xray на slave через SSH.'
 ].join('\n');
 
 function deleteTelegramMessages(telegram, messages) {
@@ -278,17 +278,17 @@ async function start() {
         await replyTemporaryText(ctx, message);
     });
 
-    async function relayCommand(ctx, action) {
-        const { ok, body } = await fetchConfig(`/relay/${action}`);
+    async function slaveCommand(ctx, action) {
+        const { ok, body } = await fetchConfig(`/slave/${action}`);
         const icon = ok ? '🟢' : '🔴';
-        const message = `${icon} Relay ${action}: ${ok ? 'ok' : 'failed'}\n${body}`;
+        const message = `${icon} Slave ${action}: ${ok ? 'ok' : 'failed'}\n${body}`;
         await replyTemporaryText(ctx, message);
     }
 
-    bot.command('relay_health', async ctx => relayCommand(ctx, 'health'));
-    bot.command('relay_start', async ctx => relayCommand(ctx, 'start'));
-    bot.command('relay_stop', async ctx => relayCommand(ctx, 'stop'));
-    bot.command('relay_restart', async ctx => relayCommand(ctx, 'restart'));
+    bot.command('slave_health', async ctx => slaveCommand(ctx, 'health'));
+    bot.command('slave_start', async ctx => slaveCommand(ctx, 'start'));
+    bot.command('slave_stop', async ctx => slaveCommand(ctx, 'stop'));
+    bot.command('slave_restart', async ctx => slaveCommand(ctx, 'restart'));
 
     bot.on('text', async (ctx, next) => {
         const text = ctx.message?.text || '';

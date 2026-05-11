@@ -38,37 +38,23 @@ fi
 
 rm -f "$XRAY_PID_FILE"
 
-if [[ "$XRAY_PRESET" == reality* ]]; then
-  if [[ ! -s "$VOLUME/geosite.dat" || ! -s "$VOLUME/geoip.dat" ]]; then
-    say "Missing geodat files; updating before start..." >"$LOG_FILE"
-    if ! /scripts/update_geodat.sh --plain >>"$LOG_FILE" 2>&1; then
-      http_error
-      say "Xray start failed"
-      say "Geodat update failed"
-      cat "$LOG_FILE"
-      exit 1
-    fi
-  fi
-
-  if ! /scripts/ensure_reality.sh >"$LOG_FILE" 2>&1; then
+if [[ ! -s "$VOLUME/geosite.dat" || ! -s "$VOLUME/geoip.dat" ]]; then
+  say "Missing geodat files; updating before start..." >"$LOG_FILE"
+  if ! /scripts/update_geodat.sh --plain >>"$LOG_FILE" 2>&1; then
     http_error
     say "Xray start failed"
-    say "SNI check failed"
+    say "Geodat update failed"
     cat "$LOG_FILE"
     exit 1
   fi
-else
-  say "Skipping Reality/SNI check for preset: $XRAY_PRESET" >"$LOG_FILE"
 fi
 
-if [[ "$XRAY_PRESET" == "xhttp_relay" ]]; then
-  if ! /scripts/ensure_xhttp_tls.sh >>"$LOG_FILE" 2>&1; then
-    http_error
-    say "Xray start failed"
-    say "xHTTP TLS certificate check failed"
-    cat "$LOG_FILE"
-    exit 1
-  fi
+if ! /scripts/ensure_reality.sh >"$LOG_FILE" 2>&1; then
+  http_error
+  say "Xray start failed"
+  say "SNI check failed"
+  cat "$LOG_FILE"
+  exit 1
 fi
 
 # generate_config — буферизуем, но не трогаем вывод

@@ -10,7 +10,7 @@ Telegram-бот для управления локальным Xray configurator
 - Создание и удаление пользователей с персональными shortId.
 - Управление SNI-кандидатами.
 - Получение client routing JSON для настройки клиента.
-- Управление xHTTP relay через configurator SSH-control endpoints.
+- Управление xHTTP slave через configurator SSH-control endpoints.
 - Автоуведомления в Telegram, если health check упал или восстановился.
 
 ## Переменные окружения
@@ -167,21 +167,21 @@ XRAY_SHORT_IDS='[""]'
 
 Возвращает текущий список SNI-кандидатов.
 
-### `/relay_health`
+### `/slave_health`
 
-Проверяет xHTTP relay через SSH с основного configurator-сервера.
+Проверяет slave через SSH с master configurator-сервера.
 
-### `/relay_start`
+### `/slave_start`
 
-Запускает Xray на xHTTP relay.
+Запускает Xray на slave.
 
-### `/relay_stop`
+### `/slave_stop`
 
-Останавливает Xray на xHTTP relay.
+Останавливает Xray на slave.
 
-### `/relay_restart`
+### `/slave_restart`
 
-Перезапускает Xray на xHTTP relay.
+Перезапускает Xray на slave.
 
 ## Запуск
 

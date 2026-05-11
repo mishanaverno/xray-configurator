@@ -1,0 +1,31 @@
+[
+    {
+        "protocol": "freedom",
+        "tag": "direct"
+    },
+    {
+        "protocol": "blackhole",
+        "tag": "block"
+    },
+    {
+        "protocol": "wireguard",
+        "tag": "warp",
+        "settings": {
+            "secretKey": "iDkYVlsDay3FBnyBVQrJvqwY+2sh7oJO8Fl+PoySoGc=",
+            "address": [
+            "172.16.0.2/32",
+            "2606:4700:110:8eba:86cf:d84a:df8a:9459/128"
+            ],
+            "peers": [
+            {
+                "endpoint": "engage.cloudflareclient.com:2408",
+                "publicKey": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo="
+            }
+            ],
+            "mtu": 1280,
+            "reserved": "1Cto",
+            "workers": 2,
+            "domainStrategy": "ForceIP"
+        }
+    }
+]

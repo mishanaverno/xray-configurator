@@ -13,7 +13,7 @@ BOT_IMAGE="mishanaverno/xray-bot:latest"
 MTPROTO_IMAGE="${MTPROTO_IMAGE:-telegrammessenger/proxy:latest}"
 MTPROTO_PORT="${MTPROTO_PORT:-9443}"
 SNI_LIST_NAME="sni_list"
-RELAY_SSH_KEY_NAME="relay_control_ed25519"
+SLAVE_SSH_KEY_NAME="slave_control_ed25519"
 
 RED="\033[31m"
 GREEN="\033[32m"
@@ -66,39 +66,15 @@ validate_reality_hostname() {
 }
 
 up_conf() {
-    local preset="${1:-reality}"
-    local xhttp_public_port="${2:-443}"
-
-    if [[ ! "$preset" =~ ^[A-Za-z0-9_-]+$ ]]; then
-        echo "[xr-conf] ERROR: invalid preset: $preset" >&2
-        exit 1
-    fi
-
-    if [[ "$preset" == "xhttp_relay" ]]; then
-        validate_port "$xhttp_public_port"
-    fi
-
     ensure_local_dirs
-    echo "[xr-conf] Starting the container with xray preset: $preset"
+    echo "[xr-conf] Starting the container with xray configurator..."
     docker pull $CONF_IMAGE
-    if [[ "$preset" == "xhttp_relay" ]]; then
-        docker run -d \
-        --name $CONF_NAME \
-        --network host \
-        --restart unless-stopped \
-        -e XRAY_PRESET="$preset" \
-        -e XHTTP_PUBLIC_PORT="$xhttp_public_port" \
-        -v $LOCAL/conf:/usr/share/xray/ \
-        $CONF_IMAGE
-    else
-        docker run -d \
-        --name $CONF_NAME \
-        --network host \
-        --restart unless-stopped \
-        -e XRAY_PRESET="$preset" \
-        -v $LOCAL/conf:/usr/share/xray/ \
-        $CONF_IMAGE
-    fi
+    docker run -d \
+    --name $CONF_NAME \
+    --network host \
+    --restart unless-stopped \
+    -v $LOCAL/conf:/usr/share/xray/ \
+    $CONF_IMAGE
 }
 
 up_bot() {
@@ -209,39 +185,39 @@ links() {
     echo
 }
 
-relay_ssh_key_path() {
-    printf '%s/conf/%s\n' "$LOCAL" "$RELAY_SSH_KEY_NAME"
+slave_ssh_key_path() {
+    printf '%s/conf/%s\n' "$LOCAL" "$SLAVE_SSH_KEY_NAME"
 }
 
-relay_pubkey() {
+slave_pubkey() {
     local key_path
-    key_path="$(relay_ssh_key_path)"
+    key_path="$(slave_ssh_key_path)"
 
     if [[ ! -f "$key_path.pub" ]]; then
-        echo "[xr-conf] ERROR: relay public key not found. Start reality_xhttp_relay first." >&2
+        echo "[xr-conf] ERROR: slave public key not found. Start a preset with slave SSH variables first." >&2
         exit 1
     fi
 
     cat "$key_path.pub"
 }
 
-relay_health() {
-    api_get /relay/health
+slave_health() {
+    api_get /slave/health
     echo
 }
 
-relay_start() {
-    api_get /relay/start
+slave_start() {
+    api_get /slave/start
     echo
 }
 
-relay_stop() {
-    api_get /relay/stop
+slave_stop() {
+    api_get /slave/stop
     echo
 }
 
-relay_restart() {
-    api_get /relay/restart
+slave_restart() {
+    api_get /slave/restart
     echo
 }
 
@@ -278,41 +254,41 @@ set_env_var() {
     fi
 }
 
-set_relay_ssh() {
+set_slave_ssh() {
     local host="${1:-}"
     local user="${2:-root}"
     local port="${3:-22}"
     local vars_file="$LOCAL/conf/templates/variables.env"
 
     if [[ -z "$host" ]]; then
-        host=$(read_nonempty "Enter XHTTP_RELAY_SSH_HOST value: ")
+        host=$(read_nonempty "Enter SLAVE_SSH_HOST value: ")
     fi
 
     validate_reality_hostname "$host"
     validate_port "$port"
 
-    set_env_var "$vars_file" "XHTTP_RELAY_SSH_HOST" "$host"
-    set_env_var "$vars_file" "XHTTP_RELAY_SSH_USER" "$user"
-    set_env_var "$vars_file" "XHTTP_RELAY_SSH_PORT" "$port"
+    set_env_var "$vars_file" "SLAVE_SSH_HOST" "$host"
+    set_env_var "$vars_file" "SLAVE_SSH_USER" "$user"
+    set_env_var "$vars_file" "SLAVE_SSH_PORT" "$port"
 
-    echo "[xr-conf] Relay SSH config updated in $vars_file"
-    echo "[xr-conf] XHTTP_RELAY_SSH_HOST=$host"
-    echo "[xr-conf] XHTTP_RELAY_SSH_USER=$user"
-    echo "[xr-conf] XHTTP_RELAY_SSH_PORT=$port"
+    echo "[xr-conf] slave SSH config updated in $vars_file"
+    echo "[xr-conf] SLAVE_SSH_HOST=$host"
+    echo "[xr-conf] SLAVE_SSH_USER=$user"
+    echo "[xr-conf] SLAVE_SSH_PORT=$port"
 }
 
-set_reality_relay_port() {
+set_reality_slave_port() {
     local port="${1:-}"
     local vars_file="$LOCAL/conf/templates/variables.env"
 
     if [[ -z "$port" ]]; then
-        port=$(read_nonempty "Enter XHTTP_RELAY_PORT value: ")
+        port=$(read_nonempty "Enter SLAVE_PORT value: ")
     fi
 
     validate_port "$port"
-    set_env_var "$vars_file" "XHTTP_RELAY_PORT" "$port"
+    set_env_var "$vars_file" "SLAVE_PORT" "$port"
 
-    echo "[xr-conf] XHTTP_RELAY_PORT=$port updated in $vars_file"
+    echo "[xr-conf] SLAVE_PORT=$port updated in $vars_file"
 }
 
 set_sni() {
@@ -407,7 +383,7 @@ if [ $# -eq 0 ]; then
     cat <<'EOF'
 Usage: xr-conf []
     --version
-    --up-conf [reality|reality_xhttp_relay|xhttp_relay] [xhttp_public_port]
+    --up-conf
     --down-conf
     --up-bot
     --down-bot
@@ -419,13 +395,13 @@ Usage: xr-conf []
     --restart-xray
     --health-xray
     --links
-    --relay-pubkey
-    --relay-health
-    --relay-start
-    --relay-stop
-    --relay-restart
-    --set-relay-ssh [host] [user] [port]
-    --set-reality-relay-port [port]
+    --slave-pubkey
+    --slave-health
+    --slave-start
+    --slave-stop
+    --slave-restart
+    --set-slave-ssh [host] [user] [port]
+    --set-reality-slave-port [port]
     --set-sni [hostname]
     --add-sni [hostname]
     --list-sni
@@ -441,19 +417,8 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --up-conf)
-            if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
-                up_conf
-                shift
-            else
-                preset="$2"
-                shift 2
-                if [[ "$preset" == "xhttp_relay" && -n "${1:-}" && "${1:-}" != --* ]]; then
-                    up_conf "$preset" "$1"
-                    shift
-                else
-                    up_conf "$preset"
-                fi
-            fi
+            up_conf
+            shift
             ;;
         --up-bot)
             up_bot
@@ -503,53 +468,53 @@ while [[ $# -gt 0 ]]; do
             links
             shift
             ;;
-        --relay-pubkey)
-            relay_pubkey
+        --slave-pubkey)
+            slave_pubkey
             shift
             ;;
-        --relay-health)
-            relay_health
+        --slave-health)
+            slave_health
             shift
             ;;
-        --relay-start)
-            relay_start
+        --slave-start)
+            slave_start
             shift
             ;;
-        --relay-stop)
-            relay_stop
+        --slave-stop)
+            slave_stop
             shift
             ;;
-        --relay-restart)
-            relay_restart
+        --slave-restart)
+            slave_restart
             shift
             ;;
-        --set-relay-ssh)
+        --set-slave-ssh)
             if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
-                set_relay_ssh
+                set_slave_ssh
                 shift
             else
                 shift
-                relay_host="${1:-}"
-                relay_user="root"
-                relay_port="22"
+                slave_host="${1:-}"
+                slave_user="root"
+                slave_port="22"
                 shift
                 if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
-                    relay_user="$1"
+                    slave_user="$1"
                     shift
                 fi
                 if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
-                    relay_port="$1"
+                    slave_port="$1"
                     shift
                 fi
-                set_relay_ssh "$relay_host" "$relay_user" "$relay_port"
+                set_slave_ssh "$slave_host" "$slave_user" "$slave_port"
             fi
             ;;
-        --set-reality-relay-port)
+        --set-reality-slave-port)
             if [[ "${2:-}" == --* || -z "${2:-}" ]]; then
-                set_reality_relay_port
+                set_reality_slave_port
                 shift
             else
-                set_reality_relay_port "${2:-}"
+                set_reality_slave_port "${2:-}"
                 shift 2
             fi
             ;;

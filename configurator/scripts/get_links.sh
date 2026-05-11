@@ -27,7 +27,7 @@ LINK_PATH="$VOLUME/$LINK_FILE"
 
 if [[ ! -f "$LINK_PATH" ]]; then
   http_ok
-  say "Links are not available for preset: ${XRAY_PRESET:-unknown}"
+  say "Links are not available for this configuration"
   exit 0
 fi
 

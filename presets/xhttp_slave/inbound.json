@@ -17,20 +17,20 @@
       "network": "xhttp",
       "security": "tls",
       "tlsSettings": {
-        "serverName": "${XHTTP_HOST}",
+        "serverName": "${HOST}",
         "alpn": [
           "h2"
         ],
         "certificates": [
           {
-            "certificateFile": "${XHTTP_TLS_CERT_FILE}",
-            "keyFile": "${XHTTP_TLS_KEY_FILE}"
+            "certificateFile": "${TLS_CERT_FILE}",
+            "keyFile": "${TLS_KEY_FILE}"
           }
         ]
       },
       "xhttpSettings": {
-        "host": "${XHTTP_HOST}",
-        "path": "${XHTTP_PATH}",
+        "host": "${HOST}",
+        "path": "${SLAVE_PATH}",
         "mode": "auto"
       }
     },

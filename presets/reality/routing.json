@@ -16,20 +16,19 @@
                 "domain:statsigapi.net",
                 "domain:featuregates.org",
                 "domain:intercom.io",
-                "domain:intercomcdn.com",
-                "geosite:openai"
+                "domain:intercomcdn.com"
             ],
             "outboundTag": "warp"
         },
         {
             "type": "field",
-            "domain": ["geosite:category-gov-ru", "domain:ru"],
-            "outboundTag": "xhttp_relay"
+            "domain": ["geosite:openai", "geosite:category-gov-ru", "domain:ru"],
+            "outboundTag": "warp"
         },
         {
             "type": "field",
             "ip": ["geoip:ru"],
-            "outboundTag": "xhttp_relay"
+            "outboundTag": "warp"
         }
     ],
     "domainStrategy": "IPIfNonMatch"

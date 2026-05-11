@@ -27,11 +27,7 @@ if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
   set +a
 fi
 
-if [[ "$XRAY_PRESET" == "xhttp_relay" ]]; then
-  XRAY_PORT=1050
-else
-  XRAY_PORT=8443
-fi
+XRAY_PORT=8443
 
 # PID file exists?
 if [[ ! -f "$XRAY_PID_FILE" ]]; then
@@ -59,12 +55,8 @@ else
     || fail "Xray port $XRAY_PORT is not reachable on 127.0.0.1"
 fi
 
-if [[ "$XRAY_PRESET" == reality* ]]; then
-  if ! /scripts/ensure_reality.sh --check-only >"$LOG_FILE" 2>&1; then
-    fail "XRAY_REALITY TLS check failed"
-  fi
-else
-  say "Skipping Reality/SNI check for preset: $XRAY_PRESET" >"$LOG_FILE"
+if ! /scripts/ensure_reality.sh --check-only >"$LOG_FILE" 2>&1; then
+  fail "XRAY_REALITY TLS check failed"
 fi
 
 # Healthy

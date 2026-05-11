@@ -30,15 +30,15 @@
     },
     {
         "protocol": "vless",
-        "tag": "xhttp_relay",
+        "tag": "xhttp_slave",
         "settings": {
             "vnext": [
                 {
-                    "address": "${XHTTP_RELAY_HOST}",
-                    "port": ${XHTTP_RELAY_PORT},
+                    "address": "${SLAVE_HOST}",
+                    "port": ${SLAVE_PORT},
                     "users": [
                         {
-                            "id": "${XHTTP_RELAY_UUID}",
+                            "id": "${SLAVE_UUID}",
                             "encryption": "none"
                         }
                     ]
@@ -49,15 +49,15 @@
             "network": "xhttp",
             "security": "tls",
             "tlsSettings": {
-                "serverName": "${XHTTP_RELAY_SERVER_NAME}",
+                "serverName": "${SLAVE_SERVER_NAME}",
                 "allowInsecure": true,
                 "alpn": [
                     "h2"
                 ]
             },
             "xhttpSettings": {
-                "host": "${XHTTP_RELAY_SERVER_NAME}",
-                "path": "${XHTTP_RELAY_PATH}",
+                "host": "${SLAVE_SERVER_NAME}",
+                "path": "${SLAVE_PATH}",
                 "mode": "auto"
             }
         }

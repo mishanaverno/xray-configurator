@@ -39,40 +39,27 @@ chmod 2775 "$TEMPLATES_DIR"
 
 /scripts/generate_templates.sh
 
-if [[ "$XRAY_PRESET" == "reality_xhttp_relay" ]]; then
-    /scripts/ensure_relay_ssh_key.sh
+if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]] && grep -Eq '^SLAVE_(SSH_HOST|HOST)=' "$TEMPLATES_DIR/$VARIABLES_FILE"; then
+    /scripts/ensure_slave_ssh_key.sh
 fi
 
 chown -R nginx:nginx "$TEMPLATES_DIR"
 chmod 2775 "$TEMPLATES_DIR"
 
-NGINX_PRESET="$XRAY_PRESET"
-if [[ "$XRAY_PRESET" == reality* ]]; then
-    NGINX_PRESET="reality"
-fi
-
-NGINX_CONFIG="/tmp/xray/nginx/$NGINX_PRESET.conf"
+NGINX_CONFIG="/tmp/xray/nginx/reality.conf"
 if [[ ! -f "$NGINX_CONFIG" ]]; then
-    say "[ERROR] nginx config does not exist for preset: $XRAY_PRESET" >&2
+    say "[ERROR] nginx config does not exist: $NGINX_CONFIG" >&2
     exit 1
 fi
 
-xhttp_public_port_from_env="${XHTTP_PUBLIC_PORT:-}"
 if [[ -f "$TEMPLATES_DIR/$VARIABLES_FILE" ]]; then
     set -a
     . "$TEMPLATES_DIR/$VARIABLES_FILE"
     set +a
 fi
 
-if [[ -n "$xhttp_public_port_from_env" ]]; then
-    XHTTP_PUBLIC_PORT="$xhttp_public_port_from_env"
-else
-    : "${XHTTP_PUBLIC_PORT:=443}"
-fi
-export XHTTP_PUBLIC_PORT
-
-say "Using nginx config: $NGINX_PRESET"
-envsubst '${XHTTP_PUBLIC_PORT}' < "$NGINX_CONFIG" > /etc/nginx/nginx.conf
+say "Using nginx config: reality"
+cp "$NGINX_CONFIG" /etc/nginx/nginx.conf
 
 umask 002 && spawn-fcgi -s /var/run/fcgiwrap.sock -M 660 -u nginx -g nginx /usr/bin/fcgiwrap
 

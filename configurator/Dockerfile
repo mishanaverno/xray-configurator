@@ -10,8 +10,8 @@ RUN addgroup -S xray || true \
  && chmod 2775 /var/run/xray /var/log/xray
 
 COPY --from=xray /usr/bin/xray /usr/bin/xray
-COPY presets/ /tmp/xray/presets/
-RUN chmod +w / /tmp/xray/presets/
+COPY preset/ /preset/
+RUN chmod +w / /preset/
 COPY scripts/ /scripts/
 RUN chmod +x /scripts/*
 COPY entrypoint.sh /entrypoint.sh
