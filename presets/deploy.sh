@@ -22,6 +22,17 @@ fail() {
   exit 1
 }
 
+permission_hint() {
+  cat >&2 <<EOF
+[deploy-preset] Could not write to remote preset directory without sudo.
+[deploy-preset] Fix permissions once on the server, then run deploy again:
+
+  sudo mkdir -p $(quote_sh "$remote_target")
+  sudo chmod -R a+rwX $(quote_sh "$remote_target")
+
+EOF
+}
+
 quote_sh() {
   printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
 }
@@ -73,7 +84,8 @@ main() {
 
   local remote_spec="$1"
   local mapping_spec="$2"
-  local script_dir repo_root preset_src remote_target remote_tmp quoted_target quoted_tmp
+  local script_dir repo_root preset_src remote_target remote_archive
+  local quoted_target quoted_archive
 
   parse_remote "$remote_spec"
   parse_mapping "$mapping_spec"
@@ -85,21 +97,27 @@ main() {
   [[ -d "$preset_src" ]] || fail "preset does not exist: $preset_src"
 
   remote_target="$remote_base/conf/preset"
-  remote_tmp="$remote_base/conf/preset.tmp.$$"
+  remote_archive="/tmp/xray-preset.$preset_name.$$.tar"
   quoted_target="$(quote_sh "$remote_target")"
-  quoted_tmp="$(quote_sh "$remote_tmp")"
+  quoted_archive="$(quote_sh "$remote_archive")"
 
   printf '[deploy-preset] Deploying presets/%s to %s@%s:%s\n' \
     "$preset_name" "$remote_user" "$remote_host" "$remote_target"
 
-  ssh -p "$remote_port" "$remote_user@$remote_host" \
-    "mkdir -p $(quote_sh "$remote_base/conf") && rm -rf $quoted_tmp && mkdir -p $quoted_tmp"
-
   tar -C "$preset_src" -cf - . | ssh -p "$remote_port" "$remote_user@$remote_host" \
-    "tar -C $quoted_tmp -xf -"
+    "cat > $quoted_archive"
 
+  if ! ssh -p "$remote_port" "$remote_user@$remote_host" \
+    "set -e; mkdir -p $quoted_target; find $quoted_target -mindepth 1 -maxdepth 1 -exec rm -rf {} +; tar --no-overwrite-dir -C $quoted_target -xf $quoted_archive; rm -f $quoted_archive"; then
+    ssh -p "$remote_port" "$remote_user@$remote_host" "rm -f $quoted_archive" >/dev/null 2>&1 || true
+    permission_hint
+    exit 1
+  fi
+
+  printf '[deploy-preset] Installed.\n'
+  printf '[deploy-preset] Remote files:\n'
   ssh -p "$remote_port" "$remote_user@$remote_host" \
-    "rm -rf $quoted_target && mv $quoted_tmp $quoted_target"
+    "find $quoted_target -maxdepth 1 -type f -printf '%f\n' | sort"
 
   printf '[deploy-preset] Done.\n'
 }

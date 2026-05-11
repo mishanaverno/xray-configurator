@@ -5,6 +5,10 @@ LANG=C LC_ALL=C
 source /scripts/env.sh
 source /scripts/lib.sh
 
+make_preset_writable() {
+    chmod -R a+rwX "$PRESET_DIR"
+}
+
 if [[ -e "$VOLUME" && ! -d "$VOLUME" ]]; then
     say "[ERROR] $VOLUME exists and is not a directory" >&2
     exit 1
@@ -33,7 +37,7 @@ else
 fi
 
 chown -R nginx:nginx "$PRESET_DIR"
-chmod 2775 "$PRESET_DIR"
+make_preset_writable
 
 /scripts/generate_secrets.sh
 
@@ -44,7 +48,7 @@ if [[ -f "$PRESET_DIR/$VARIABLES_FILE" ]] && grep -Eq '^SLAVE_(SSH_HOST|HOST)=' 
 fi
 
 chown -R nginx:nginx "$PRESET_DIR"
-chmod 2775 "$PRESET_DIR"
+make_preset_writable
 
 NGINX_CONFIG="/tmp/xray/nginx/reality.conf"
 if [[ ! -f "$NGINX_CONFIG" ]]; then

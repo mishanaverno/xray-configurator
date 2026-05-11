@@ -1,0 +1,24 @@
+{
+    "rules": [
+        {
+            "type": "field",
+            "protocol": "bittorrent",
+            "outboundTag": "block"
+        },
+        {
+            "type": "field",
+            "domain": ["geosite:category-gov-ru", "domain:ru"],
+            "outboundTag": "direct"
+        },
+        {
+            "type": "field",
+            "ip": ["geoip:ru"],
+            "outboundTag": "direct"
+        },
+        {
+            "type": "field",
+            "outboundTag": "democrat_nl"
+        }
+    ],
+    "domainStrategy": "IPIfNonMatch"
+}

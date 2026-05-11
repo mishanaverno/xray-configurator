@@ -1,0 +1,40 @@
+[
+    {
+        "protocol": "freedom",
+        "tag": "direct"
+    },
+    {
+        "protocol": "blackhole",
+        "tag": "block"
+    },
+    {
+        "protocol": "vless",
+        "tag": "democrat_nl",
+        "settings": {
+            "vnext": [
+                {
+                    "address": "${DEMOCRAT_NL_HOST}",
+                    "port": ${DEMOCRAT_NL_PORT},
+                    "users": [
+                        {
+                            "id": "${DEMOCRAT_NL_UUID}",
+                            "encryption": "none",
+                            "flow": "xtls-rprx-vision"
+                        }
+                    ]
+                }
+            ]
+        },
+        "streamSettings": {
+            "network": "tcp",
+            "security": "reality",
+            "realitySettings": {
+                "serverName": "${DEMOCRAT_NL_SERVER_NAME}",
+                "publicKey": "${DEMOCRAT_NL_PUBLIC_KEY}",
+                "fingerprint": "chrome",
+                "shortId": "",
+                "spiderX": "/"
+            }
+        }
+    }
+]
